@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ch.usz.c3pro.c3_pro_android_framework">
+
+    <application
+        android:label="@string/app_name">
+        <activity
+            android:name="org.researchstack.backbone.ui.ViewTaskActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Base.Theme.Backbone" />
+
+    </application>
+
+</manifest>
