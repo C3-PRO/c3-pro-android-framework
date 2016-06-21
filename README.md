@@ -1,4 +1,4 @@
-C3PRO Android
+C3PRO Android Framework
 -------
 C3PRO uses the [HAPI][hapi] FHIR library and [ResearchStack] in an attempt to bring the [C3-PRO] functionality to Android.
 
