@@ -3,10 +3,12 @@ package ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic;
 import android.content.Intent;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
+import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.DateType;
 import org.hl7.fhir.dstu3.model.IntegerType;
 import org.hl7.fhir.dstu3.model.QuestionnaireResponse;
 import org.hl7.fhir.dstu3.model.StringType;
+import org.hl7.fhir.dstu3.model.Type;
 import org.researchstack.backbone.answerformat.AnswerFormat;
 import org.researchstack.backbone.answerformat.BooleanAnswerFormat;
 import org.researchstack.backbone.answerformat.ChoiceAnswerFormat;
@@ -17,21 +19,23 @@ import org.researchstack.backbone.result.StepResult;
 import org.researchstack.backbone.result.TaskResult;
 import org.researchstack.backbone.ui.ViewTaskActivity;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
  * C3PRO
- *
+ * <p/>
  * Created by manny Weber on 05/23/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +88,12 @@ public class TaskResult2QuestionnaireResponse {
 
         if ((stepResult != null) && (stepResult.getResult() != null)) {
             QuestionnaireResponse.QuestionnaireResponseItemComponent responseItem = new QuestionnaireResponse.QuestionnaireResponseItemComponent();
-            responseItem.addAnswer(getFHIRAnswerForStepResult(stepResult));
+            for (QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer : getFHIRAnswerForStepResult(stepResult)) {
+                responseItem.addAnswer(answer);
+            }
+
+            //responseItem.addAnswer(getFHIRAnswerForStepResult(stepResult));
+
             return responseItem;
         } else {
             return null;
@@ -117,29 +126,83 @@ public class TaskResult2QuestionnaireResponse {
      * @param stepResult A {@link org.researchstack.backbone.result.StepResult} containing an answer given by the user
      * @return A {@link org.hl7.fhir.dstu3.model.QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent} containing the answer given by the user
      */
-    public static QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent getFHIRAnswerForStepResult(StepResult stepResult) {
+    public static List<QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent> getFHIRAnswerForStepResult(StepResult stepResult) {
 
-        QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+        List<QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent> answerList = new ArrayList<>();
 
         AnswerFormat format = stepResult.getAnswerFormat();
 
         if (format instanceof ChoiceAnswerFormat) {
 
             if (format instanceof BooleanAnswerFormat) {
-                answerComponent.setValue(new BooleanType((Boolean) stepResult.getResult()));
+                QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                answerList.add(answerComponent.setValue(new BooleanType((Boolean) stepResult.getResult())));
             } else {
                 // TODO ChoiceAnswers
-                answerComponent.setValue(new StringType((String) stepResult.getResult()));
+
+                if (format.getQuestionType() == AnswerFormat.Type.SingleChoice) {
+                    String[] parts = (((StringType) stepResult.getResult()).primitiveValue()).split("#", 2);
+                    Coding coding = new Coding();
+                    coding.setSystem(parts[0]);
+                    coding.setCode(parts[1]);
+                    QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                    answer.setValue(coding);
+                    answerList.add(answer);
+                } else {
+
+               /* Coding coding = new Coding();
+                String[] parts = ((String) stepResult.getResult()).split("#", 2);
+                coding.setSystem(parts[0]);
+                coding.setCode(parts[1]);
+                answerComponent.setValue(coding);*/
+                    Object[] result = (Object[]) stepResult.getResult();
+                    for (int i = 0; i < result.length; i++) {
+                        String[] parts = (((Type) result[i]).primitiveValue()).split("#", 2);
+                        Coding coding = new Coding();
+                        coding.setSystem(parts[0]);
+                        coding.setCode(parts[1]);
+                        QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                        answer.setValue(coding);
+                        answerList.add(answer);
+                    }
+                }
             }
 
         } else if (format instanceof IntegerAnswerFormat) {
-            answerComponent.setValue(new IntegerType((int) stepResult.getResult()));
+            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+            answerList.add(answerComponent.setValue(new IntegerType((int) stepResult.getResult())));
         } else if (format instanceof TextAnswerFormat) {
-            answerComponent.setValue(new StringType((String) stepResult.getResult()));
+            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+            answerList.add(answerComponent.setValue(new StringType((String) stepResult.getResult())));
         } else if (format instanceof DateAnswerFormat) {
-            answerComponent.setValue(new DateType(new Date((long) stepResult.getResult())));
+            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+            answerList.add(answerComponent.setValue(new DateType(new Date((long) stepResult.getResult()))));
         }
-        return answerComponent;
+        return answerList;
+    }
+
+    /**
+     * Returns a {@link org.hl7.fhir.dstu3.model.QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent}
+     * based on the passed ResearchStack {@link org.researchstack.backbone.result.StepResult}
+     *
+     * @param stepResult A {@link org.researchstack.backbone.result.StepResult} containing an answer given by the user
+     * @return A {@link org.hl7.fhir.dstu3.model.QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent} containing the answer given by the user
+     */
+    public static List<QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent> getFHIRAnswersForChoiceStepResult(StepResult stepResult) {
+
+        List<QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent> answerList = new ArrayList<>();
+
+        Map<String, String> stepResults = stepResult.getResults();
+        for (Map.Entry<String, String> entry : stepResults.entrySet()) {
+            String[] parts = entry.getValue().split("#", 2);
+            Coding coding = new Coding();
+            coding.setSystem(parts[0]);
+            coding.setCode(parts[1]);
+            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+            answer.setValue(coding);
+            answerList.add(answer);
+        }
+        return answerList;
     }
 
     /**

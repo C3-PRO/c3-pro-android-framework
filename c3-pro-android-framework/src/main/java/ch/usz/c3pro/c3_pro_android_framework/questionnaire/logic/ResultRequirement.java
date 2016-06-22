@@ -1,5 +1,7 @@
 package ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic;
 
+import android.util.Log;
+
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.DateType;
@@ -66,7 +68,6 @@ public class ResultRequirement implements Serializable {
     public boolean isSatisfiedBy(TaskResult result) {
 
         StepResult resultAnswer = result.getStepResult(questionIdentifier);
-        resultAnswer.getResult();
 
         // TODO all other answertypes
 
@@ -161,10 +162,11 @@ public class ResultRequirement implements Serializable {
         else if (reqAnswer instanceof Coding) {
 
             // single choice
-            String reqString = ((Coding) reqAnswer).getCode();
-            String ansString = (String) resultAnswer.getResult();
-
+            Coding reqCode = (Coding) reqAnswer;
+            String reqString = reqCode.getSystem() + "#" + reqCode.getCode();
+            String ansString = ((StringType)resultAnswer.getResult()).primitiveValue();
             return reqString.equals(ansString);
+
             // TODO multichoice?
         }
         /*Quantity not implemented yet*/
