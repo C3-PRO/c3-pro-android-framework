@@ -10,6 +10,8 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 
+import org.hl7.fhir.dstu3.model.Bundle;
+
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
 
@@ -57,7 +59,7 @@ public class ReadResourceJob extends Job {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == HANDLER_MESSAGE_BUNDLE) {
-                    org.hl7.fhir.dstu3.model.Bundle bundle = (org.hl7.fhir.dstu3.model.Bundle)msg.obj;
+                    Bundle bundle = (Bundle)msg.obj;
                     receiver.receiveBundle(requestID, bundle);
                 } else {
                     //TODO error handling
@@ -83,9 +85,9 @@ public class ReadResourceJob extends Job {
 
     @Override
     public void onRun() throws Throwable {
-        org.hl7.fhir.dstu3.model.Bundle response = C3PRO.getFhirContext().newRestfulGenericClient(url).search()
+        Bundle response = C3PRO.getFhirContext().newRestfulGenericClient(url).search()
                 .byUrl(search)
-                .returnBundle(org.hl7.fhir.dstu3.model.Bundle.class)
+                .returnBundle(Bundle.class)
                 .execute();
         Message msg = new Message();
         msg.what = HANDLER_MESSAGE_BUNDLE;

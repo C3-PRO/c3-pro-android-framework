@@ -141,29 +141,33 @@ public class TaskResult2QuestionnaireResponse {
                 // TODO ChoiceAnswers
 
                 if (format.getQuestionType() == AnswerFormat.Type.SingleChoice) {
-                    String[] parts = (((StringType) stepResult.getResult()).primitiveValue()).split("#", 2);
-                    Coding coding = new Coding();
-                    coding.setSystem(parts[0]);
-                    coding.setCode(parts[1]);
-                    QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
-                    answer.setValue(coding);
-                    answerList.add(answer);
+                    Type answerType = (Type)stepResult.getResult();
+                    if (answerType instanceof Coding) {
+                        Coding answerCoding = (Coding) answerType;
+                        answerCoding.setUserSelected(true);
+                        QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                        answer.setValue(answerCoding);
+                        answerList.add(answer);
+                    } else{
+                        QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                        answer.setValue(answerType);
+                        answerList.add(answer);
+                    }
                 } else {
-
-               /* Coding coding = new Coding();
-                String[] parts = ((String) stepResult.getResult()).split("#", 2);
-                coding.setSystem(parts[0]);
-                coding.setCode(parts[1]);
-                answerComponent.setValue(coding);*/
                     Object[] result = (Object[]) stepResult.getResult();
                     for (int i = 0; i < result.length; i++) {
-                        String[] parts = (((Type) result[i]).primitiveValue()).split("#", 2);
-                        Coding coding = new Coding();
-                        coding.setSystem(parts[0]);
-                        coding.setCode(parts[1]);
-                        QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
-                        answer.setValue(coding);
-                        answerList.add(answer);
+                        Type answerType = (Type)result[i];
+                        if (answerType instanceof Coding) {
+                            Coding answerCoding = (Coding) answerType;
+                            answerCoding.setUserSelected(true);
+                            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                            answer.setValue(answerCoding);
+                            answerList.add(answer);
+                        } else{
+                            QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answer = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
+                            answer.setValue(answerType);
+                            answerList.add(answer);
+                        }
                     }
                 }
             }

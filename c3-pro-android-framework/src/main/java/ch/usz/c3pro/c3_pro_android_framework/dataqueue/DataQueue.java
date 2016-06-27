@@ -1,29 +1,44 @@
 package ch.usz.c3pro.c3_pro_android_framework.dataqueue;
 
+import android.content.res.Resources;
+
 import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.JobManager;
 
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Questionnaire;
 import org.hl7.fhir.dstu3.model.QuestionnaireResponse;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.researchstack.backbone.task.Task;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.IGenericClient;
+import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.CreateResourceJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadResourceJob;
 
 
 /**
  * C3PRO
- *
+ * <p>
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +62,7 @@ public class DataQueue {
      * The BundleReceiver interface is used to pass back downloaded resources in a FHIR Bundle.
      * */
     public interface BundleReceiver {
-        public void receiveBundle(String requestID, org.hl7.fhir.dstu3.model.Bundle resource);
+        public void receiveBundle(String requestID, Bundle resource);
     }
 
     /**
@@ -55,6 +70,13 @@ public class DataQueue {
      * */
     public interface TaskReceiver {
         public void receiveTask(Task task);
+    }
+
+    /**
+     * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
+     * */
+    public interface QuestionnaireReceiver {
+        public void receiveQuestionnaire(String requestID, Questionnaire questionnaire);
     }
 
     /**
@@ -111,5 +133,50 @@ public class DataQueue {
      * */
     public String getFHIRServerURL() {
         return server;
+    }
+
+
+    /**
+     * loads the content of the file corresponding to the rawID into a string.
+     * */
+    public static String getRawFileAsString(Resources res, int rawID) {
+
+        //InputStream is = res.openRawResource(R.raw.questionnaire_textvalues);
+        InputStream is = res.openRawResource(rawID);
+        Writer writer = new StringWriter();
+        char[] buffer = new char[1024];
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            int n;
+            while ((n = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, n);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return writer.toString();
+    }
+
+    /**
+     * returns a Questionnaire from the jason with corresponding to the rawID from the "raw" resource
+     * folder.
+     * */
+    public static Questionnaire getQuestionnaireFromRawJson(Resources res, int rawID) {
+
+        IParser parser = C3PRO.getFhirContext().newJsonParser();
+
+        String json = getRawFileAsString(res, rawID);
+
+        return parser.parseResource(Questionnaire.class, json);
+
     }
 }

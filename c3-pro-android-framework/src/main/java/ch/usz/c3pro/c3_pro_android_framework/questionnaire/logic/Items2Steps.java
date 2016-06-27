@@ -1,5 +1,6 @@
 package ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic;
 
+import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Questionnaire;
 import org.hl7.fhir.dstu3.model.Reference;
@@ -391,7 +392,12 @@ public class Items2Steps {
                     for (ValueSet.ConceptReferenceComponent concept : concepts) {
                         String text = concept.getDisplay();
                         String code = concept.getCode();
-                        choiceList.add(new Choice<Type>(text, new StringType(system + "#" + code)));
+                        Coding coding = new Coding();
+                        coding.setDisplay(text);
+                        coding.setSystem(system);
+                        coding.setCode(code);
+                        choiceList.add(new Choice<Type>(text, coding));
+                        //choiceList.add(new Choice<Type>(text, new StringType(system + "#" + code)));
                     }
                 }
                 return choiceList.toArray(new Choice[choiceList.size()]);
@@ -405,7 +411,14 @@ public class Items2Steps {
                 for (ValueSet.ValueSetExpansionContainsComponent contain : expansion) {
                     String text = contain.getDisplay();
                     String code = contain.getCode();
-                    choiceList.add(new Choice<String>(text, code));
+                    String system = contain.getSystem();
+                    Coding coding = new Coding();
+                    coding.setSystem(system);
+                    coding.setCode(code);
+                    coding.setDisplay(text);
+                    choiceList.add(new Choice<Type>(text, coding));
+
+                    //choiceList.add(new Choice<Type>(text, new StringType(system + "#" + code)));
                 }
                 return choiceList.toArray(new Choice[choiceList.size()]);
             }

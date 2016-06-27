@@ -9,6 +9,7 @@ import org.hl7.fhir.dstu3.model.DecimalType;
 import org.hl7.fhir.dstu3.model.IntegerType;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.hl7.fhir.dstu3.model.Type;
+import org.researchstack.backbone.answerformat.AnswerFormat;
 import org.researchstack.backbone.result.StepResult;
 import org.researchstack.backbone.result.TaskResult;
 
@@ -18,16 +19,16 @@ import java.util.Date;
 
 /**
  * C3PRO
- *
+ * <p>
  * Created by manny Weber on 05/18/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,10 +67,32 @@ public class ResultRequirement implements Serializable {
      * @return boolean indicating whether the Requirement is met or not.
      */
     public boolean isSatisfiedBy(TaskResult result) {
-
         StepResult resultAnswer = result.getStepResult(questionIdentifier);
+        if (resultAnswer.getAnswerFormat().getQuestionType() == AnswerFormat.Type.MultipleChoice) {
 
-        // TODO all other answertypes
+            Object[] resultArray = (Object[]) resultAnswer.getResult();
+            for (int i = 0; i < resultArray.length; i++) {
+                if (isSatisfiedBy(resultArray[i])) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return isSatisfiedBy(resultAnswer.getResult());
+        }
+    }
+
+    /**
+     * Returns whether or not the ResultRequirement is met by the answers given by the user up to
+     * the point of check.
+     *
+     * @param resultAnswer TaskResult.getResult() Object containing the answer given by the user so far.
+     * @return boolean indicating whether the Requirement is met or not.
+     */
+    public boolean isSatisfiedBy(Object resultAnswer) {
+
+
+        // TODO all other answerTypes
 
         /*
         Types of FHIR Questionnaire Answers
@@ -104,31 +127,30 @@ public class ResultRequirement implements Serializable {
         TimeInterval(NotImplementedStepBody.class),
         Location(NotImplementedStepBody.class),
         Form(FormBody.class);
-
         */
 
         if (reqAnswer instanceof BooleanType) {
             boolean reqBool = ((BooleanType) reqAnswer).booleanValue();
-            Boolean ansBool = (Boolean) resultAnswer.getResult();
+            Boolean ansBool = (Boolean) resultAnswer;
 
             return reqBool == ansBool;
 
         } else if (reqAnswer instanceof DecimalType) {
             // Decimal Answer Format not implemented yet; using Integer
             int reqInt = ((IntegerType) reqAnswer).getValue();
-            int ansInt = (int) resultAnswer.getResult();
+            int ansInt = (int) resultAnswer;
 
             return reqInt == ansInt;
 
         } else if (reqAnswer instanceof IntegerType) {
             int reqInt = ((IntegerType) reqAnswer).getValue();
-            int ansInt = (int) resultAnswer.getResult();
+            int ansInt = (int) resultAnswer;
 
             return reqInt == ansInt;
 
         } else if (reqAnswer instanceof DateType) {
             Date reqDate = ((DateType) reqAnswer).getValue();
-            Date ansDate = new Date((long) resultAnswer.getResult());
+            Date ansDate = new Date((long) resultAnswer);
             SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
 
             return fmt.format(reqDate).equals(fmt.format(ansDate));
@@ -141,37 +163,35 @@ public class ResultRequirement implements Serializable {
             SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMddhhmm");
 
             return fmt.format(reqDate).equals(fmt.format(ansDate));
-
-
         }*/
-        /*Instant not implemented yet*/
 
+        /*Instant not implemented yet*/
         /*Time not implemeted yet
 
         */
         else if (reqAnswer instanceof StringType) {
             String reqString = ((StringType) reqAnswer).getValue();
-            String ansString = (String) resultAnswer.getResult();
+            String ansString = (String) resultAnswer;
 
             return reqString.equals(ansString);
 
         }
+
         /*URI not implemented yet*/
-
         /*Attachment not implemeted yet*/
-        else if (reqAnswer instanceof Coding) {
 
+        else if (reqAnswer instanceof Coding) {
             // single choice
             Coding reqCode = (Coding) reqAnswer;
-            String reqString = reqCode.getSystem() + "#" + reqCode.getCode();
-            String ansString = ((StringType)resultAnswer.getResult()).primitiveValue();
-            return reqString.equals(ansString);
+            Coding ansCode = (Coding) resultAnswer;
+            return reqCode.getSystem().equals(ansCode.getSystem()) && reqCode.getCode().equals(ansCode.getCode());
 
             // TODO multichoice?
         }
-        /*Quantity not implemented yet*/
 
+        /*Quantity not implemented yet*/
         /*Reference not implemeted yet*/
+
         return false;
     }
 }
