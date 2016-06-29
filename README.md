@@ -7,6 +7,7 @@ FHIR `Questionnaire` resources directly with a ResearchStack `ViewTaskActivity` 
 you can send to your server.
 
 ### Usage
+The library is hosted at [bintray].
 
 To set up a project to use the C3PRO framework, the library is available on jCenter and can simply be added as a dependency:
 ```groovy
@@ -259,3 +260,4 @@ This work will be [Apache 2][apache] licensed. A NOTICE.txt file will follow at 
 [jobqueue]: https://github.com/yigit/android-priority-jobqueue
 [C3-PRO-android]:https://github.com/manuelaCalavera/c3-pro-android-framework
 [c3-pro-demo]:https://github.com/manuelaCalavera/c3-pro-demo-android
+[bintray]:https://bintray.com/manuelacalavera/maven/c3-pro-android-framework/view
