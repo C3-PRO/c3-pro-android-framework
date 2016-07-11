@@ -7,6 +7,7 @@ FHIR `Questionnaire` resources directly with a ResearchStack `ViewTaskActivity` 
 you can send to your server.
 
 ### Usage
+The library is hosted at [bintray].
 
 To set up a project to use the C3PRO framework, the library is available on jCenter and can simply be added as a dependency:
 ```groovy
@@ -225,9 +226,7 @@ Target Android sdk is 23, minimum sdk 16 due to ResearchStack.
 ### Issues
 
 Implementation is ongoing, not everything is complete and nothing has been systematically tested.
-- Answers to open choice questions ("open-choice", "http://hl7.org/fhir/answer-format") are not yet added to QuestionnaireResponse
-- SampleData can not parse externally linked valueSets, they must be contained in the Questionnaire json-file
-- EnableWhen conditions have only been tested with boolean answertypes
+- EnableWhen conditions have only been tested with boolean and singlechoice answertypes
 - No proper error handling implemented as of yet.
 
 Modules
@@ -261,3 +260,4 @@ This work will be [Apache 2][apache] licensed. A NOTICE.txt file will follow at 
 [jobqueue]: https://github.com/yigit/android-priority-jobqueue
 [C3-PRO-android]:https://github.com/manuelaCalavera/c3-pro-android-framework
 [c3-pro-demo]:https://github.com/manuelaCalavera/c3-pro-demo-android
+[bintray]:https://bintray.com/manuelacalavera/maven/c3-pro-android-framework/view
