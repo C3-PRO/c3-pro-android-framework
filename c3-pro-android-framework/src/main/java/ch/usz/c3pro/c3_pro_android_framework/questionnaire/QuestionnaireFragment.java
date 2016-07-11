@@ -48,7 +48,7 @@ import ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs.QuestionnaireRes
  * parent activity.
  */
 public class QuestionnaireFragment extends Fragment {
-    public static final String LTAG = "FSTK";
+    public static final String LTAG = "C3P";
     public static final int TASKVIEW_REQUEST_ID = 12345;
 
     private Questionnaire questionnaire;
@@ -63,9 +63,9 @@ public class QuestionnaireFragment extends Fragment {
      * a QuestionnaireResponse.
      */
     public interface QuestionnaireFragmentListener extends Serializable {
-        public abstract void whenTaskReady();
+        public abstract void whenTaskReady(String requestID);
 
-        public abstract void whenCompleted(QuestionnaireResponse questionnaireResponse);
+        public abstract void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse);
 
         public abstract void whenCancelledOrFailed();
     }
@@ -81,16 +81,16 @@ public class QuestionnaireFragment extends Fragment {
 
     public void prepareTaskViewActivity() {
         if (mTask == null) {
-            PrepareTaskJob job = new PrepareTaskJob(questionnaire, new DataQueue.TaskReceiver() {
+            PrepareTaskJob job = new PrepareTaskJob(questionnaire, questionnaire.getId(), new DataQueue.TaskReceiver() {
                 @Override
-                public void receiveTask(Task task) {
+                public void receiveTask(String requestID, Task task) {
                     mTask = task;
-                    mCallback.whenTaskReady();
+                    mCallback.whenTaskReady(requestID);
                 }
             });
             C3PRO.getJobManager().addJobInBackground(job);
         } else {
-            mCallback.whenTaskReady();
+            mCallback.whenTaskReady(questionnaire.getId());
         }
     }
 
@@ -114,11 +114,11 @@ public class QuestionnaireFragment extends Fragment {
         if (requestCode == TASKVIEW_REQUEST_ID) {
             switch (resultCode) {
                 case AppCompatActivity.RESULT_OK:
-                    TaskResult taskResult = (TaskResult) data.getExtras().get(ViewTaskActivity.EXTRA_TASK_RESULT);
-                    QuestionnaireResponseJob job = new QuestionnaireResponseJob(taskResult, new DataQueue.QuestionnaireResponseReceiver() {
+                    final TaskResult taskResult = (TaskResult) data.getExtras().get(ViewTaskActivity.EXTRA_TASK_RESULT);
+                    QuestionnaireResponseJob job = new QuestionnaireResponseJob(taskResult, taskResult.getIdentifier(), new DataQueue.QuestionnaireResponseReceiver() {
                         @Override
-                        public void receiveResponse(QuestionnaireResponse questionnaireResponse) {
-                            mCallback.whenCompleted(questionnaireResponse);
+                        public void receiveResponse(String requestID, QuestionnaireResponse questionnaireResponse) {
+                            mCallback.whenCompleted(taskResult.getIdentifier(), questionnaireResponse);
                         }
                     });
                     C3PRO.getJobManager().addJobInBackground(job);

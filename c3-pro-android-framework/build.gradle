@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/manuelaCalavera/c3-pro-android-framework'
     gitUrl = 'https://github.com/manuelaCalavera/c3-pro-android-framework.git'
 
-    libraryVersion = '0.1'
+    libraryVersion = '0.1.2'
 
     developerId = 'manuelacalavera'
     developerName = 'manny Weber'
@@ -55,11 +55,12 @@ dependencies {
     compile 'org.researchstack:skin:1.0.0.rc4'
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.birbit:android-priority-jobqueue:2.0.0-alpha3'
+    compile 'com.google.android.gms:play-services-fitness:9.2.0'
     compile (group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-android', version: '1.5', classifier: 'dstu3') {
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
 }
 
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+//apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+//apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

@@ -138,8 +138,7 @@ public class TaskResult2QuestionnaireResponse {
                 QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent answerComponent = new QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent();
                 answerList.add(answerComponent.setValue(new BooleanType((Boolean) stepResult.getResult())));
             } else {
-                // TODO ChoiceAnswers
-
+                // ChoiceAnswers -> singleChoice or multiChoice
                 if (format.getQuestionType() == AnswerFormat.Type.SingleChoice) {
                     Type answerType = (Type)stepResult.getResult();
                     if (answerType instanceof Coding) {

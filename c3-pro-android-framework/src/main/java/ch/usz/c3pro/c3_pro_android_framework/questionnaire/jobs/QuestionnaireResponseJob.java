@@ -42,7 +42,7 @@ import ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic.TaskResult2Ques
  * to update the UI.
  */
 public class QuestionnaireResponseJob extends Job {
-    public static final String LTAG = "FSTK";
+    public static final String LTAG = "C3P";
     private static int HANDLER_MESSAGE_RESPONSE_READY = 0;
     private TaskResult result;
     private Handler dataHandler;
@@ -51,7 +51,7 @@ public class QuestionnaireResponseJob extends Job {
      * The TaskResult provided will be converted to a FHIR QuestionnaireResponse in a background
      * thread and passed back to the taskReceiver when done.
      * */
-    public QuestionnaireResponseJob(TaskResult taskResult, final DataQueue.QuestionnaireResponseReceiver responseReceiver){
+    public QuestionnaireResponseJob(TaskResult taskResult, final String requestID, final DataQueue.QuestionnaireResponseReceiver responseReceiver){
         super(new Params(Priority.HIGH));
         result = taskResult;
         dataHandler = new Handler(Looper.getMainLooper()) {
@@ -59,7 +59,7 @@ public class QuestionnaireResponseJob extends Job {
             public void handleMessage(Message msg) {
                 if (msg.what == HANDLER_MESSAGE_RESPONSE_READY) {
                     QuestionnaireResponse response = (QuestionnaireResponse) msg.obj;
-                    responseReceiver.receiveResponse(response);
+                    responseReceiver.receiveResponse(requestID, response);
                 } else {
                     //TODO error handling
                 }

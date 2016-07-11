@@ -69,7 +69,7 @@ public class DataQueue {
      * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
      * */
     public interface TaskReceiver {
-        public void receiveTask(Task task);
+        public void receiveTask(String requestID, Task task);
     }
 
     /**
@@ -83,8 +83,9 @@ public class DataQueue {
      * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
      * */
     public interface QuestionnaireResponseReceiver {
-        public void receiveResponse(QuestionnaireResponse questionnaireResponse);
+        public void receiveResponse(String requestID, QuestionnaireResponse questionnaireResponse);
     }
+
 
     /**
      * Interface needed for a HAPIQueryJob. Implement the runQuery method and run a HAPI Query on the

@@ -1,7 +1,5 @@
 package ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic;
 
-import android.util.Log;
-
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.DateType;

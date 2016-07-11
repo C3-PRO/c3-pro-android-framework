@@ -42,7 +42,7 @@ import ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic.Questionnaire2T
  * to update the UI.
  */
 public class PrepareTaskJob extends Job {
-    private static int HANDLER_MESSAGE_TASK_READY = 0;
+    private static int HANDLER_MESSAGE_TASK_READY = 3;
     private Questionnaire questionnaire;
     private Handler dataHandler;
 
@@ -50,7 +50,7 @@ public class PrepareTaskJob extends Job {
      * The FHIR questionnaire provided will be converted to a ResearchStack Task in a background
      * thread and passed back to the taskReceiver when done.
      * */
-    public PrepareTaskJob(Questionnaire FHIRQuestionnaire, final DataQueue.TaskReceiver taskReceiver) {
+    public PrepareTaskJob(Questionnaire FHIRQuestionnaire, final  String requestID, final DataQueue.TaskReceiver taskReceiver) {
         super(new Params(Priority.HIGH));
         questionnaire = FHIRQuestionnaire;
         dataHandler = new Handler(Looper.getMainLooper()) {
@@ -58,7 +58,7 @@ public class PrepareTaskJob extends Job {
             public void handleMessage(Message msg) {
                 if (msg.what == HANDLER_MESSAGE_TASK_READY) {
                     Task task = (Task) msg.obj;
-                    taskReceiver.receiveTask(task);
+                    taskReceiver.receiveTask(requestID, task);
                 } else {
                     //TODO error handling
                 }
