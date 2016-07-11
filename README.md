@@ -165,18 +165,19 @@ private void launchSurvey(Questionnaire questionnaire) {
         QuestionnaireFragment fragment = (QuestionnaireFragment) getSupportFragmentManager().findFragmentByTag(questionnaire.getId());
         if (fragment != null) {
             /**
-             * If the fragment has been added before, the TaskViewActivity is started
+             * If the fragment has been added before, the TaskViewActivity can be started directly,
+             * assuming that it was prepared right after the fragment was created.
              * */
             fragment.startTaskViewActivity();
         } else {
             /**
-             * If the fragment does not exist, we create it, add it to the fragment manager and
+             * If the fragment does not exist, create it, add it to the fragment manager and
              * let it prepare the TaskViewActivity
              * */
             final QuestionnaireFragment questionnaireFragment = new QuestionnaireFragment();
             questionnaireFragment.newInstance(questionnaire, new QuestionnaireFragment.QuestionnaireFragmentListener() {
                 @Override
-                public void whenTaskReady() {
+                public void whenTaskReady(String requestID) {
                     /**
                      * Only when the task is ready, the survey is started
                      * */
@@ -184,7 +185,7 @@ private void launchSurvey(Questionnaire questionnaire) {
                 }
 
                 @Override
-                public void whenCompleted(QuestionnaireResponse questionnaireResponse) {
+                public void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse) {
                     /**
                      * Where the response for a completed survey is received. Here it is printed
                      * to a TextView defined in the app layout.
@@ -242,6 +243,11 @@ Enables the conversion of a FHIR `Questionnaire` resource to a ResearchSTack `ta
 
 This module provides a FHIR server implementation used to move FHIR resources, created on device, to a FHIR 
 server, without the need for user interaction nor -confirmation.
+
+### GoogleFit
+
+Supports easy interaction with the Google Fit API. Step count, height and latest weight of the user can be read and returned as FHIR `Quantity` and `Observation`.
+It can also write new height and weight data into the Fit history.
 
 Licence
 -------
