@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import org.researchstack.backbone.ui.ViewTaskActivity;
 import java.io.Serializable;
 
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
+import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
 import ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs.PrepareTaskJob;
 import ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs.QuestionnaireResponseJob;
@@ -53,7 +53,7 @@ public class QuestionnaireFragment extends Fragment {
 
     private Questionnaire questionnaire;
     private Task mTask;
-    private QuestionnaireFragmentListener mCallback;
+    private QuestionnaireFragmentListener fragmentListener;
 
 
     /**
@@ -63,11 +63,11 @@ public class QuestionnaireFragment extends Fragment {
      * a QuestionnaireResponse.
      */
     public interface QuestionnaireFragmentListener extends Serializable {
-        public abstract void whenTaskReady(String requestID);
+        void whenTaskReady(String requestID);
 
-        public abstract void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse);
+        void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse);
 
-        public abstract void whenCancelledOrFailed();
+        void whenCancelledOrFailed(C3PROErrorCode code);
     }
 
 
@@ -76,32 +76,34 @@ public class QuestionnaireFragment extends Fragment {
      */
     public void newInstance(Questionnaire FHIRQuestionnaire, QuestionnaireFragmentListener listener) {
         questionnaire = FHIRQuestionnaire;
-        mCallback = listener;
+        fragmentListener = listener;
     }
 
     public void prepareTaskViewActivity() {
         if (mTask == null) {
-            PrepareTaskJob job = new PrepareTaskJob(questionnaire, questionnaire.getId(), new DataQueue.TaskReceiver() {
+            PrepareTaskJob job = new PrepareTaskJob(questionnaire, questionnaire.getId(), new DataQueue.CreateTaskCallback() {
                 @Override
-                public void receiveTask(String requestID, Task task) {
+                public void onSuccess(String requestID, Task task) {
                     mTask = task;
-                    mCallback.whenTaskReady(requestID);
+                    fragmentListener.whenTaskReady(requestID);
+                }
+
+                @Override
+                public void onFail(String requestID, C3PROErrorCode code) {
+                    fragmentListener.whenCancelledOrFailed(code);
                 }
             });
             C3PRO.getJobManager().addJobInBackground(job);
         } else {
-            mCallback.whenTaskReady(questionnaire.getId());
+            fragmentListener.whenTaskReady(questionnaire.getId());
         }
     }
 
     public void startTaskViewActivity() {
-        //TODO error handling when task not prepared yet
         if (getContext() == null) {
-            mCallback.whenCancelledOrFailed();
-            Log.e(LTAG, "context null in qFragment");
+            fragmentListener.whenCancelledOrFailed(C3PROErrorCode.QUESTIONNAIRE_FRAGMENT_CONTEXT_NULL);
         } else if (mTask == null) {
-            mCallback.whenCancelledOrFailed();
-            Log.d(LTAG, "no Task prepared yet");
+            fragmentListener.whenCancelledOrFailed(C3PROErrorCode.QUESTIONNAIRE_FRAGMENT_TASK_NULL);
         } else {
             Intent intent = ViewTaskActivity.newIntent(getContext(), mTask);
             startActivityForResult(intent, TASKVIEW_REQUEST_ID);
@@ -115,16 +117,22 @@ public class QuestionnaireFragment extends Fragment {
             switch (resultCode) {
                 case AppCompatActivity.RESULT_OK:
                     final TaskResult taskResult = (TaskResult) data.getExtras().get(ViewTaskActivity.EXTRA_TASK_RESULT);
-                    QuestionnaireResponseJob job = new QuestionnaireResponseJob(taskResult, taskResult.getIdentifier(), new DataQueue.QuestionnaireResponseReceiver() {
+                    QuestionnaireResponseJob job = new QuestionnaireResponseJob(taskResult, taskResult.getIdentifier(), new DataQueue.CreateQuestionnaireResponseCallback() {
                         @Override
-                        public void receiveResponse(String requestID, QuestionnaireResponse questionnaireResponse) {
-                            mCallback.whenCompleted(taskResult.getIdentifier(), questionnaireResponse);
+                        public void onSuccess(String requestID, QuestionnaireResponse questionnaireResponse) {
+                            fragmentListener.whenCompleted(taskResult.getIdentifier(), questionnaireResponse);
                         }
+
+                        @Override
+                        public void onFail(String requestID, C3PROErrorCode code) {
+                            fragmentListener.whenCancelledOrFailed(code);
+                        }
+
                     });
                     C3PRO.getJobManager().addJobInBackground(job);
                     break;
                 case AppCompatActivity.RESULT_CANCELED:
-                    mCallback.whenCancelledOrFailed();
+                    fragmentListener.whenCancelledOrFailed(C3PROErrorCode.RESULT_CANCELLED);
             }
         }
     }

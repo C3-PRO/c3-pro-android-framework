@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class ConditionalQuestionStep extends QuestionStep implements ConditionalStep, Serializable {
 
-    private List<ResultRequirement> requirements;
+    private final List<ResultRequirement> requirements = new ArrayList<>();
 
     /**
      * The parent class {@link org.researchstack.backbone.step.QuestionStep} has no default constructor, so we have to provide one.
@@ -67,9 +67,6 @@ public class ConditionalQuestionStep extends QuestionStep implements Conditional
      * */
     @Override
     public void addRequirement(ResultRequirement req) {
-        if (requirements == null) {
-            requirements = new ArrayList<>();
-        }
         requirements.add(req);
     }
 
@@ -79,9 +76,6 @@ public class ConditionalQuestionStep extends QuestionStep implements Conditional
      * */
     @Override
     public void addRequirements(List<ResultRequirement> reqs) {
-        if (requirements == null) {
-            requirements = new ArrayList<>();
-        }
         requirements.addAll(reqs);
     }
 

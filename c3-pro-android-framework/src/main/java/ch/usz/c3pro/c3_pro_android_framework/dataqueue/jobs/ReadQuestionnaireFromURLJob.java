@@ -1,14 +1,7 @@
 package ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
+import com.google.common.base.Strings;
 
 import org.hl7.fhir.dstu3.model.Questionnaire;
 
@@ -20,8 +13,7 @@ import java.util.Scanner;
 
 import ca.uhn.fhir.parser.IParser;
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
-import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
-import ch.usz.c3pro.c3_pro_android_framework.utils.StringUtil;
+import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
 
 /**
  * C3PRO
@@ -41,28 +33,13 @@ import ch.usz.c3pro.c3_pro_android_framework.utils.StringUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class ReadQuestionnaireFromURLJob extends Job {
-    private static int HANDLER_MESSAGE_QUESTIONNAIRE = 2;
+public class ReadQuestionnaireFromURLJob extends LoadResultJob<Questionnaire> {
     private String loadURL;
-    private DataQueue.QuestionnaireReceiver receiver;
-    private Handler dataHandler;
 
-    public ReadQuestionnaireFromURLJob(final String requestID, String URL, DataQueue.QuestionnaireReceiver questionnaireReceiver) {
-        super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID));
+
+    public ReadQuestionnaireFromURLJob(final String requestID, String URL, LoadResultJob.LoadResultCallback callback) {
+        super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID), requestID, callback);
         loadURL = URL;
-
-        receiver = questionnaireReceiver;
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_QUESTIONNAIRE) {
-                    Questionnaire questionnaire = (Questionnaire) msg.obj;
-                    receiver.receiveQuestionnaire(requestID, questionnaire);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
 
     @Override
@@ -72,21 +49,7 @@ public class ReadQuestionnaireFromURLJob extends Job {
 
     @Override
     public void onRun() throws Throwable {
-
-        Message msg = new Message();
-        msg.what = HANDLER_MESSAGE_QUESTIONNAIRE;
-        msg.obj = readQuestionnaire(loadURL);
-        dataHandler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
+        returnResult(readQuestionnaire(loadURL));
     }
 
     private Questionnaire readQuestionnaire(String qURL) {
@@ -98,14 +61,16 @@ public class ReadQuestionnaireFromURLJob extends Job {
                 qString = qString.concat(scanner.nextLine());
             }
             scanner.close();
-            if (StringUtil.isNotNullOrEmpty(qString)) {
+            if (!Strings.isNullOrEmpty(qString)) {
                 IParser parser = C3PRO.getFhirContext().newJsonParser();
                 Questionnaire q = parser.parseResource(Questionnaire.class, qString);
                 return q;
             }
 
         } catch (MalformedURLException e) {
+            resultCallback.onFail(request, C3PROErrorCode.CAUGHT_IO_EXCEPTION);
         } catch (IOException e) {
+            resultCallback.onFail(request, C3PROErrorCode.CAUGHT_IO_EXCEPTION);
         }
         return new Questionnaire();
     }

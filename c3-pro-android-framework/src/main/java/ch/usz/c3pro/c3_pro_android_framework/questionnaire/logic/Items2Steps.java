@@ -1,5 +1,7 @@
 package ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic;
 
+import com.google.common.base.Strings;
+
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Questionnaire;
@@ -20,8 +22,6 @@ import org.researchstack.backbone.step.Step;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import ch.usz.c3pro.c3_pro_android_framework.utils.StringUtil;
 
 /**
  * C3PRO
@@ -111,13 +111,13 @@ public class Items2Steps {
     public static Step item2Step(Questionnaire.QuestionnaireItemComponent item) {
 
         String linkId = item.getLinkId();
-        String id = StringUtil.isNotNullOrEmpty(linkId) ? linkId : UUID.randomUUID().toString();
+        String id = !Strings.isNullOrEmpty(linkId) ? linkId : UUID.randomUUID().toString();
 
         //TODO create nice title and text
 
         String itemText = item.getText();
-        String text = StringUtil.isNotNullOrEmpty(itemText) ? itemText : getAlternativeTextForItem(item);
-        if (!StringUtil.isNotNullOrEmpty(id)) {
+        String text = !Strings.isNullOrEmpty(itemText) ? itemText : getAlternativeTextForItem(item);
+        if (Strings.isNullOrEmpty(id)) {
             id = itemText;
         }
 
@@ -340,9 +340,15 @@ public class Items2Steps {
     private static String getAlternativeTextForItem(Questionnaire.QuestionnaireItemComponent item) {
         String instr = questionInstruction(item);
         String hlp = questionHelpText(item);
+        String txt = "no Text";
 
-        String txt = StringUtil.isNotNullOrEmpty(instr) ? instr : hlp;
-        return StringUtil.isNotNullOrEmpty(txt) ? txt : "no Text";
+        if (!Strings.isNullOrEmpty(instr)){
+            txt = instr;
+        } else if (!Strings.isNullOrEmpty(hlp)){
+            txt = hlp;
+        }
+
+        return txt;
     }
 
     /**

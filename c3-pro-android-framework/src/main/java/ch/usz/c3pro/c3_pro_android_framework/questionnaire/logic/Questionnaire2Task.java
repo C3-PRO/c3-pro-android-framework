@@ -52,7 +52,6 @@ public class Questionnaire2Task {
 
         List<Step> steps = Items2Steps.items2Steps(items);
 
-        return new ConditionalOrderedTask(identifier, steps) {
-        };
+        return new ConditionalOrderedTask(identifier, steps);
     }
 }

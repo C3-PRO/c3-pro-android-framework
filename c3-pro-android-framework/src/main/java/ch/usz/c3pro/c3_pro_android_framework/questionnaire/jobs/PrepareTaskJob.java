@@ -1,19 +1,12 @@
 package ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
 
 import org.hl7.fhir.dstu3.model.Questionnaire;
 import org.researchstack.backbone.task.Task;
 
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.Priority;
 import ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic.Questionnaire2Task;
 
@@ -41,29 +34,16 @@ import ch.usz.c3pro.c3_pro_android_framework.questionnaire.logic.Questionnaire2T
  * background thread. The handler will move the result to the main (UI) thread, so it can be used
  * to update the UI.
  */
-public class PrepareTaskJob extends Job {
-    private static int HANDLER_MESSAGE_TASK_READY = 3;
+public class PrepareTaskJob extends LoadResultJob<Task> {
     private Questionnaire questionnaire;
-    private Handler dataHandler;
 
     /**
      * The FHIR questionnaire provided will be converted to a ResearchStack Task in a background
      * thread and passed back to the taskReceiver when done.
      * */
-    public PrepareTaskJob(Questionnaire FHIRQuestionnaire, final  String requestID, final DataQueue.TaskReceiver taskReceiver) {
-        super(new Params(Priority.HIGH));
+    public PrepareTaskJob(Questionnaire FHIRQuestionnaire, final  String requestID, final DataQueue.CreateTaskCallback taskReceiver) {
+        super(new Params(Priority.HIGH), requestID, taskReceiver);
         questionnaire = FHIRQuestionnaire;
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_TASK_READY) {
-                    Task task = (Task) msg.obj;
-                    taskReceiver.receiveTask(requestID, task);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
 
     @Override
@@ -74,19 +54,6 @@ public class PrepareTaskJob extends Job {
     @Override
     public void onRun() throws Throwable {
         Task task = Questionnaire2Task.questionnaire2Task(questionnaire);
-        Message msg = new Message();
-        msg.what = HANDLER_MESSAGE_TASK_READY;
-        msg.obj = task;
-        dataHandler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
+       returnResult(task);
     }
 }

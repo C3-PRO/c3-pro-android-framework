@@ -1,15 +1,6 @@
 package ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.Log;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.Bucket;
@@ -27,8 +18,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.Priority;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
 
 /**
  * C3PRO
@@ -52,36 +43,17 @@ import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
 /**
  * This job can be used to read the aggregate step count between two dates from Google Fit in the background.
  * */
-public class ReadAggregateStepCountJob extends Job {
-    public static String LTAG = "LC3P";
-    private static int HANDLER_MESSAGE_QUANTITY = 1;
-
+public class ReadAggregateStepCountJob extends LoadResultJob<Quantity> {
     private GoogleApiClient apiClient;
-    private GoogleFitAgent.QuantityReceiver receiver;
-    private Handler dataHandler;
     private Date start;
     private Date end;
 
-    public ReadAggregateStepCountJob(GoogleApiClient googleApiClient, final String requestID, Date startTime, Date endTime, GoogleFitAgent.QuantityReceiver quantityReceiver) {
-        super(new Params(Priority.HIGH).singleInstanceBy(requestID));
+    public ReadAggregateStepCountJob(GoogleApiClient googleApiClient, final String requestID, Date startTime, Date endTime, LoadResultCallback callback) {
+        super(new Params(Priority.HIGH).singleInstanceBy(requestID), requestID, callback);
         apiClient = googleApiClient;
-        receiver = quantityReceiver;
         start = startTime;
         end = endTime;
-
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_QUANTITY) {
-                    Quantity quantity = (Quantity) msg.obj;
-                    receiver.receiveQuantity(requestID, quantity);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
-
 
     @Override
     public void onAdded() {
@@ -102,14 +74,11 @@ public class ReadAggregateStepCountJob extends Job {
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
 
-        Log.d(LTAG, "about to read result");
         DataReadResult dataReadResult =
                 Fitness.HistoryApi.readData(apiClient, readRequest).await(1, TimeUnit.MINUTES);
 
         int stepCount = 0;
         if (dataReadResult.getBuckets().size() > 0) {
-            Log.d(LTAG, "Number of returned buckets of DataSets is: "
-                    + dataReadResult.getBuckets().size());
             for (Bucket bucket : dataReadResult.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
@@ -120,8 +89,6 @@ public class ReadAggregateStepCountJob extends Job {
                 }
             }
         } else if (dataReadResult.getDataSets().size() > 0) {
-            Log.d(LTAG, "1: Number of returned DataSets is: "
-                    + dataReadResult.getDataSets().size());
             for (DataSet dataSet : dataReadResult.getDataSets()) {
                 for (DataPoint dataPoint : dataSet.getDataPoints()) {
                     stepCount += (int) dataPoint.getValue(Field.FIELD_STEPS).asFloat();
@@ -133,19 +100,6 @@ public class ReadAggregateStepCountJob extends Job {
         quantity.setValue(stepCount);
         quantity.setUnit("steps");
 
-        Message msg = new Message();
-        msg.what = HANDLER_MESSAGE_QUANTITY;
-        msg.obj = quantity;
-        dataHandler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
+        returnResult(quantity);
     }
 }

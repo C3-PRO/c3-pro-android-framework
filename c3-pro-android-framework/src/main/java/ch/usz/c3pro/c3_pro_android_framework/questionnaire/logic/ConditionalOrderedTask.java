@@ -68,21 +68,13 @@ public class ConditionalOrderedTask extends OrderedTask implements Serializable 
      */
     @Override
     public Step getStepAfterStep(Step step, TaskResult result) {
-        Step checkStep = null;
-        if (step == null) {
-            checkStep = steps.get(0);
-        } else {
-            int nextIndex = steps.indexOf(step) + 1;
-
-            if (nextIndex < steps.size()) {
-                checkStep = steps.get(nextIndex);
-            }
-        }
+        Step checkStep = super.getStepAfterStep(step, result);
 
         if (checkStep instanceof ConditionalStep) {
             if (((ConditionalStep) checkStep).requirementsAreSatisfiedBy(result)) {
                 return checkStep;
             } else {
+                // recursive call here  watch out !
                 return getStepAfterStep(checkStep, result);
             }
         } else {
@@ -101,13 +93,8 @@ public class ConditionalOrderedTask extends OrderedTask implements Serializable 
      */
     @Override
     public Step getStepBeforeStep(Step step, TaskResult result) {
-        Step checkStep = null;
 
-        int nextIndex = steps.indexOf(step) - 1;
-
-        if (nextIndex >= 0) {
-            checkStep = steps.get(nextIndex);
-        }
+        Step checkStep = super.getStepBeforeStep(step, result);
 
         if (checkStep instanceof ConditionalStep) {
             if (((ConditionalStep) checkStep).requirementsAreSatisfiedBy(result)) {

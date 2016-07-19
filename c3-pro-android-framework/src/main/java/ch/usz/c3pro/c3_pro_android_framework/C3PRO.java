@@ -42,6 +42,7 @@ public class C3PRO {
     private static DataQueue dataQueue;
 
 
+
     private C3PRO() {
     }
 
@@ -88,7 +89,7 @@ public class C3PRO {
 
     private static Configuration.Builder getDefaultBuilder(Context context) {
         Configuration.Builder builder = new Configuration.Builder(context)
-                .customLogger(new CustomLogger() {
+                /**.customLogger(new CustomLogger() {
                     private static final String TAG = "JOBMANAGER";
 
                     @Override
@@ -115,7 +116,7 @@ public class C3PRO {
                     public void v(String text, Object... args) {
 
                     }
-                })
+                })*/
                 .minConsumerCount(1)//always keep at least one consumer alive
                 .maxConsumerCount(3)//up to 3 consumers at a time
                 .loadFactor(3)//3 jobs per consumer

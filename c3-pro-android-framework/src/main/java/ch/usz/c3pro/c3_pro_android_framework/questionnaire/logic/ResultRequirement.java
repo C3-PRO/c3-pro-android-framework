@@ -87,7 +87,7 @@ public class ResultRequirement implements Serializable {
      * @param resultAnswer TaskResult.getResult() Object containing the answer given by the user so far.
      * @return boolean indicating whether the Requirement is met or not.
      */
-    public boolean isSatisfiedBy(Object resultAnswer) {
+    private boolean isSatisfiedBy(Object resultAnswer) {
 
 
         // TODO all other answerTypes

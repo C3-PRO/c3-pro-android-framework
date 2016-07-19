@@ -1,19 +1,10 @@
 package ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
 
 import org.hl7.fhir.dstu3.model.Bundle;
 
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
-import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
 
 /**
  * C3PRO
@@ -39,33 +30,18 @@ import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
  * The Handler is used to transfer the resource to the main (UI) thread, so it could be used to
  * update UI elements.
  */
-public class ReadResourceJob extends Job {
-    private static int HANDLER_MESSAGE_BUNDLE = 0;
+public class ReadResourceJob extends LoadResultJob<Bundle> {
     private String search;
     private String url;
-    private DataQueue.BundleReceiver receiver;
-    private Handler dataHandler;
 
     /**
      * searchURL defines the search, can be absolute or relative to the FHIRServerURL, where the resource is
      * loaded from. requestID will be passed back for identification with the result to the resourceReceiver.
      * */
-    public ReadResourceJob(final String requestID, String searchURL, DataQueue.BundleReceiver resourceReceiver, String FHIRServerURL){
-        super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID));
+    public ReadResourceJob(final String requestID, String searchURL, LoadResultCallback callback, String FHIRServerURL){
+        super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID), requestID, callback);
         search = searchURL;
         url = FHIRServerURL;
-        receiver = resourceReceiver;
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_BUNDLE) {
-                    Bundle bundle = (Bundle)msg.obj;
-                    receiver.receiveBundle(requestID, bundle);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
 
     /**
@@ -73,8 +49,8 @@ public class ReadResourceJob extends Job {
      * the C3PRO, where the resource is loaded from. requestID will be passed back for
      * identification with the result to the resourceReceiver.
      * */
-    public ReadResourceJob(String requestID, String searchURL, DataQueue.BundleReceiver resourceReceiver){
-        this(requestID, searchURL, resourceReceiver, C3PRO.getDataQueue().getFHIRServerURL());
+    public ReadResourceJob(String requestID, String searchURL, LoadResultCallback callback){
+        this(requestID, searchURL, callback, C3PRO.getDataQueue().getFHIRServerURL());
     }
 
 
@@ -89,19 +65,6 @@ public class ReadResourceJob extends Job {
                 .byUrl(search)
                 .returnBundle(Bundle.class)
                 .execute();
-        Message msg = new Message();
-        msg.what = HANDLER_MESSAGE_BUNDLE;
-        msg.obj = response;
-        dataHandler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
+        returnResult(response);
     }
 }

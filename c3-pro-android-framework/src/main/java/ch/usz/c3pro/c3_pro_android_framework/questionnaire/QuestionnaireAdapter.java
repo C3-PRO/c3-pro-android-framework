@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.google.common.base.Strings;
+
 import org.hl7.fhir.dstu3.model.Questionnaire;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.ArrayList;
 /**
  * This Adapter can be used to add an Array of Questionnaires directly to a ListView.
  * The id of the Questionnaires will be used for display.
- * */
+ */
 public class QuestionnaireAdapter extends ArrayAdapter<Questionnaire> {
 
     private static class ViewHolder {
@@ -60,10 +62,12 @@ public class QuestionnaireAdapter extends ArrayAdapter<Questionnaire> {
         }
 
         Questionnaire item = getItem(position);
-        if (item!= null) {
-            // My layout has only one TextView
-            // do whatever you want with your string and long
-            viewHolder.itemView.setText(item.getId().replace("Questionnaire/", ""));
+        if (item != null) {
+            if (!Strings.isNullOrEmpty(item.getId())) {
+                viewHolder.itemView.setText(item.getId().replace("Questionnaire/", ""));
+            } else {
+                viewHolder.itemView.setText("Questionnaire with no ID");
+            }
         }
         return convertView;
     }

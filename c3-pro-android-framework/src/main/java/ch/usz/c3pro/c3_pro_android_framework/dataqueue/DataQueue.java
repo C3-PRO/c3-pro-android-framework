@@ -23,22 +23,25 @@ import java.io.Writer;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
+import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.CreateResourceJob;
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadQuestionnaireFromURLJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadResourceJob;
 
 
 /**
  * C3PRO
- * <p>
+ * <p/>
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- * <p>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,31 +62,27 @@ public class DataQueue {
     private String server;
 
     /**
-     * The BundleReceiver interface is used to pass back downloaded resources in a FHIR Bundle.
+     * The ReceiveBundleCallback interface is used to pass back downloaded resources in a FHIR Bundle.
      * */
-    public interface BundleReceiver {
-        public void receiveBundle(String requestID, Bundle resource);
+    public interface ReceiveBundleCallback extends LoadResultJob.LoadResultCallback<Bundle>{
     }
 
     /**
-     * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
+     * The CreateTaskCallback interface is used to pass back Tasks that were created from Questionnaires.
      * */
-    public interface TaskReceiver {
-        public void receiveTask(String requestID, Task task);
+    public interface CreateTaskCallback extends LoadResultJob.LoadResultCallback<Task> {
     }
 
     /**
-     * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
+     * The CreateQuestionnaireCallback interface is used to pass back Questionnaires.
      * */
-    public interface QuestionnaireReceiver {
-        public void receiveQuestionnaire(String requestID, Questionnaire questionnaire);
+    public interface CreateQuestionnaireCallback extends LoadResultJob.LoadResultCallback<Questionnaire> {
     }
 
     /**
-     * The TaskReceiver interface is used to pass back Tasks that were created from Questionnaires.
+     * The CreateTaskCallback interface is used to pass back Tasks that were created from Questionnaires.
      * */
-    public interface QuestionnaireResponseReceiver {
-        public void receiveResponse(String requestID, QuestionnaireResponse questionnaireResponse);
+    public interface CreateQuestionnaireResponseCallback extends LoadResultJob.LoadResultCallback<QuestionnaireResponse> {
     }
 
 
@@ -92,7 +91,7 @@ public class DataQueue {
      * provided client.
      */
     public interface QueryPoster {
-        public void runQuery(IGenericClient client);
+        void runQuery(IGenericClient client);
     }
 
     /**
@@ -117,8 +116,16 @@ public class DataQueue {
      * the C3PRO, where the resource is loaded from. requestID will be passed back for
      * identification with the result to the resourceReceiver.
      * */
-    public void read(String requestID, String searchURL, BundleReceiver resourceReceiver) {
-        ReadResourceJob job = new ReadResourceJob(requestID, searchURL, resourceReceiver);
+    public void read(String requestID, String searchURL, ReceiveBundleCallback callback) {
+        ReadResourceJob job = new ReadResourceJob(requestID, searchURL, callback);
+        jobManager.addJobInBackground(job);
+    }
+
+    /**
+     * reads a Questionnaire from a json file at an URL
+     * */
+    public void getJsonQuestionnaireFromURL(String requestID, String url, CreateQuestionnaireCallback callback){
+        ReadQuestionnaireFromURLJob job = new ReadQuestionnaireFromURLJob(requestID, url, callback);
         jobManager.addJobInBackground(job);
     }
 
@@ -144,6 +151,7 @@ public class DataQueue {
 
         //InputStream is = res.openRawResource(R.raw.questionnaire_textvalues);
         InputStream is = res.openRawResource(rawID);
+
         Writer writer = new StringWriter();
         char[] buffer = new char[1024];
         try {

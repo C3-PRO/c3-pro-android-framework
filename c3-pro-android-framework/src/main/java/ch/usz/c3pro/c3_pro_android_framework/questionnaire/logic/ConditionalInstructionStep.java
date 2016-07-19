@@ -36,7 +36,7 @@ import java.util.List;
  * displaying the step to the user.
  */
 public class ConditionalInstructionStep extends InstructionStep implements ConditionalStep, Serializable {
-    private List<ResultRequirement> requirements;
+    private List<ResultRequirement> requirements = new ArrayList<>();
 
     /**
      * The parent class {@link org.researchstack.backbone.step.InstructionStep} has no default
@@ -65,9 +65,6 @@ public class ConditionalInstructionStep extends InstructionStep implements Condi
      * */
     @Override
     public void addRequirement(ResultRequirement req) {
-        if (requirements == null){
-            requirements = new ArrayList<>();
-        }
         requirements.add(req);
     }
 
@@ -77,9 +74,6 @@ public class ConditionalInstructionStep extends InstructionStep implements Condi
      * */
     @Override
     public void addRequirements(List<ResultRequirement> reqs) {
-        if (requirements == null){
-            requirements = new ArrayList<>();
-        }
         requirements.addAll(reqs);
     }
 

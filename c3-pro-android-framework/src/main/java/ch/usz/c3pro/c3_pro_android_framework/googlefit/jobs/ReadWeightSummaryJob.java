@@ -1,15 +1,6 @@
 package ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.Log;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.Bucket;
@@ -28,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.Priority;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
 
@@ -53,35 +45,17 @@ import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
 /**
  * This job can be used to read a weight summary from Google Fit in the background. It will call back
  * with a FHIR Observation with maximum, average, and minimum weight within the specified time range.
- * */
-public class ReadWeightSummaryJob extends Job {
-    public static String LTAG = "LC3P";
-    private static int HANDLER_MESSAGE_WEIGHT_SUMMARY = 6;
-
+ */
+public class ReadWeightSummaryJob extends LoadResultJob<Observation> {
     private GoogleApiClient apiClient;
-    private GoogleFitAgent.ObservationReceiver receiver;
-    private Handler dataHandler;
     private Date start;
     private Date end;
 
     public ReadWeightSummaryJob(GoogleApiClient googleApiClient, final String requestID, Date startTime, Date endTime, GoogleFitAgent.ObservationReceiver observationReceiver) {
-        super(new Params(Priority.HIGH).singleInstanceBy(requestID));
+        super(new Params(Priority.HIGH).singleInstanceBy(requestID), requestID, observationReceiver);
         apiClient = googleApiClient;
-        receiver = observationReceiver;
         start = startTime;
         end = endTime;
-
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_WEIGHT_SUMMARY) {
-                    Observation observation = (Observation) msg.obj;
-                    receiver.receiveObservation(requestID, observation);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
 
 
@@ -99,7 +73,6 @@ public class ReadWeightSummaryJob extends Job {
                 .setTimeRange(start.getTime(), end.getTime(), TimeUnit.MILLISECONDS)
                 .build();
 
-        Log.d(LTAG, "about to read result");
         DataReadResult dataReadResult =
                 Fitness.HistoryApi.readData(apiClient, readRequest).await(1, TimeUnit.MINUTES);
 
@@ -108,8 +81,6 @@ public class ReadWeightSummaryJob extends Job {
         float max = 0;
         int sampleCount = 0;
         if (dataReadResult.getBuckets().size() > 0) {
-            Log.d(LTAG, "Number of returned buckets of DataSets is: "
-                    + dataReadResult.getBuckets().size());
             for (Bucket bucket : dataReadResult.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
@@ -129,8 +100,6 @@ public class ReadWeightSummaryJob extends Job {
                 }
             }
         } else if (dataReadResult.getDataSets().size() > 0) {
-            Log.d(LTAG, "Number of returned DataSets is: "
-                    + dataReadResult.getDataSets().size());
             for (DataSet dataSet : dataReadResult.getDataSets()) {
                 for (DataPoint dataPoint : dataSet.getDataPoints()) {
                     sampleCount++;
@@ -151,15 +120,14 @@ public class ReadWeightSummaryJob extends Job {
         SimpleDateFormat format = new SimpleDateFormat("MM-dd-yyyy");
         String startString = format.format(start);
         String endString = format.format(end);
-        String id = "Weight Summary between " +startString+ " and "+endString;
-        Log.d(LTAG, id);
+        String id = "Weight Summary between " + startString + " and " + endString;
         observation.setId(id);
         observation.setStatus(Observation.ObservationStatus.FINAL);
 
 
         if (sampleCount > 0) {
             Quantity minQuantity = new Quantity();
-            minQuantity.setValue((double)(min/sampleCount));
+            minQuantity.setValue((double) (min / sampleCount));
             minQuantity.setUnit("kg");
             minQuantity.setSystem("http://loinc.org");
             minQuantity.setCode("3141-9");
@@ -169,7 +137,7 @@ public class ReadWeightSummaryJob extends Job {
             observation.addComponent(minComp);
 
             Quantity avgQuantity = new Quantity();
-            avgQuantity.setValue((double)(avg/sampleCount));
+            avgQuantity.setValue((double) (avg / sampleCount));
             avgQuantity.setUnit("kg");
             avgQuantity.setSystem("http://loinc.org");
             avgQuantity.setCode("3141-9");
@@ -179,7 +147,7 @@ public class ReadWeightSummaryJob extends Job {
             observation.addComponent(avgComp);
 
             Quantity maxQuantity = new Quantity();
-            maxQuantity.setValue((double)(max/sampleCount));
+            maxQuantity.setValue((double) (max / sampleCount));
             maxQuantity.setUnit("kg");
             maxQuantity.setSystem("http://loinc.org");
             maxQuantity.setCode("3141-9");
@@ -188,19 +156,6 @@ public class ReadWeightSummaryJob extends Job {
             maxComp.setValue(maxQuantity);
             observation.addComponent(maxComp);
         }
-        Message msg = new Message();
-        msg.what = HANDLER_MESSAGE_WEIGHT_SUMMARY;
-        msg.obj = observation;
-        dataHandler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
+        returnResult(observation);
     }
 }

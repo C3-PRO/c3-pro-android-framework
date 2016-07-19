@@ -1,15 +1,6 @@
 package ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.Log;
-
-import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
-import com.birbit.android.jobqueue.RetryConstraint;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.Bucket;
@@ -26,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.Priority;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
 
@@ -52,32 +44,13 @@ import ch.usz.c3pro.c3_pro_android_framework.googlefit.GoogleFitAgent;
  * This job can be used to read the latest entry of the user's height. The permissions to read
  * such data has to have been requested.
  * If no entry can be found, a quantity of zero is returned.
- * */
-public class ReadHeightJob extends Job {
-    public static String LTAG = "LC3P";
-    private static int HANDLER_MESSAGE_HEIGHT = 5;
-
+ */
+public class ReadHeightJob extends LoadResultJob<Quantity> {
     private GoogleApiClient apiClient;
-    private GoogleFitAgent.QuantityReceiver receiver;
-    private Handler dataHandler;
 
     public ReadHeightJob(GoogleApiClient googleApiClient, final String requestID, GoogleFitAgent.QuantityReceiver quantityReceiver) {
-        super(new Params(Priority.HIGH).singleInstanceBy(requestID));
+        super(new Params(Priority.HIGH).singleInstanceBy(requestID), requestID, quantityReceiver);
         apiClient = googleApiClient;
-        receiver = quantityReceiver;
-
-
-        dataHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == HANDLER_MESSAGE_HEIGHT) {
-                    Quantity quantity = (Quantity) msg.obj;
-                    receiver.receiveQuantity(requestID, quantity);
-                } else {
-                    //TODO error handling
-                }
-            }
-        };
     }
 
     @Override
@@ -97,13 +70,8 @@ public class ReadHeightJob extends Job {
         DataReadResult dataReadResult =
                 Fitness.HistoryApi.readData(apiClient, readRequest).await(1, TimeUnit.MINUTES);
 
-        //float height = 0;
-        Message msg = new Message();
-        msg.what=HANDLER_MESSAGE_HEIGHT;
 
         if (dataReadResult.getDataSets().size() > 0) {
-            Log.d(LTAG, "Number of returned DataSets is: "
-                    + dataReadResult.getDataSets().size());
             for (DataSet dataSet : dataReadResult.getDataSets()) {
                 for (DataPoint dataPoint : dataSet.getDataPoints()) {
                     Quantity quantity = new Quantity();
@@ -111,12 +79,10 @@ public class ReadHeightJob extends Job {
                     quantity.setUnit("m");
                     quantity.setSystem("http://loinc.org");
                     quantity.setCode("8302-2");
-                    msg.obj = quantity;
+                    returnResult(quantity);
                 }
             }
         } else if (dataReadResult.getBuckets().size() > 0) {
-            Log.d(LTAG, "Number of returned buckets of DataSets is: "
-                    + dataReadResult.getBuckets().size());
             for (Bucket bucket : dataReadResult.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
@@ -126,29 +92,17 @@ public class ReadHeightJob extends Job {
                         quantity.setUnit("m");
                         quantity.setSystem("http://loinc.org");
                         quantity.setCode("8302-2");
-                        msg.obj = quantity;
+                        returnResult(quantity);
                     }
                 }
             }
-        } else{
+        } else {
             Quantity quantity = new Quantity();
             quantity.setValue(0d);
             quantity.setUnit("m");
             quantity.setSystem("http://loinc.org");
             quantity.setCode("8302-2");
-            msg.obj = quantity;
+            returnResult(quantity);
         }
-
-    dataHandler.sendMessage(msg);
-}
-
-    @Override
-    protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
-    }
-
-    @Override
-    protected RetryConstraint shouldReRunOnThrowable(@NonNull Throwable throwable, int runCount, int maxRunCount) {
-        return null;
     }
 }

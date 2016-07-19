@@ -6,6 +6,8 @@ import android.util.Log;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSet;
+import com.google.android.gms.fitness.data.DataSource;
+import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 
 import org.hl7.fhir.dstu3.model.Observation;
@@ -16,12 +18,12 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.EnterHeightDataPointJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.EnterWeightDataPointJob;
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadAggregateStepCountJob;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadHeightJob;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadWeightJob;
 import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadWeightSummaryJob;
+import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.WriteToGoogleFitJob;
 
 /**
  * C3PRO
@@ -54,15 +56,13 @@ public class GoogleFitAgent {
     /**
      * Interface used to pass back Quantities read from Google Fit.
      */
-    public interface QuantityReceiver {
-        public void receiveQuantity(String requestID, Quantity quantity);
+    public interface QuantityReceiver extends LoadResultJob.LoadResultCallback<Quantity>{
     }
 
     /**
      * Interface used to pass back multiple Quantities read from Google Fit
      */
-    public interface ObservationReceiver {
-        public void receiveObservation(String requestID, Observation observation);
+    public interface ObservationReceiver extends LoadResultJob.LoadResultCallback<Observation>{
     }
 
     private void GoogleFitAgent() {
@@ -144,8 +144,19 @@ public class GoogleFitAgent {
      * .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
      */
     public static void enterWeightDataPoint(Context context, float weight) {
-        Date now = new Date();
-        EnterWeightDataPointJob job = new EnterWeightDataPointJob(apiClient, context, now, now, weight);
+        long now = new Date().getTime();
+        DataSource dataSource = new DataSource.Builder()
+                .setAppPackageName(context)
+                .setDataType(DataType.TYPE_WEIGHT)
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        DataSet dataSet = DataSet.create(dataSource);
+        DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(now, now, TimeUnit.MILLISECONDS);
+        dataPoint = dataPoint.setFloatValues(new Float(weight));
+        dataSet.add(dataPoint);
+
+        WriteToGoogleFitJob job = new WriteToGoogleFitJob(apiClient, dataSet);
         C3PRO.getJobManager().addJobInBackground(job);
     }
 
@@ -157,8 +168,19 @@ public class GoogleFitAgent {
      * .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
      */
     public static void enterHeightDataPoint(Context context, float height) {
-        Date now = new Date();
-        EnterHeightDataPointJob job = new EnterHeightDataPointJob(apiClient, context, now, now, height);
+        long now = new Date().getTime();
+        DataSource dataSource = new DataSource.Builder()
+                .setAppPackageName(context)
+                .setDataType(DataType.TYPE_HEIGHT)
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        DataSet dataSet = DataSet.create(dataSource);
+        DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(now, now, TimeUnit.MILLISECONDS);
+        dataPoint = dataPoint.setFloatValues(new Float(height));
+        dataSet.add(dataPoint);
+
+        WriteToGoogleFitJob job = new WriteToGoogleFitJob(apiClient, dataSet);
         C3PRO.getJobManager().addJobInBackground(job);
     }
 }
