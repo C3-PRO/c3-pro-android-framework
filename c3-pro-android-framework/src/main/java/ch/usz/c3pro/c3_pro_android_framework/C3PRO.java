@@ -1,11 +1,9 @@
 package ch.usz.c3pro.c3_pro_android_framework;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.birbit.android.jobqueue.JobManager;
 import com.birbit.android.jobqueue.config.Configuration;
-import com.birbit.android.jobqueue.log.CustomLogger;
 
 import ca.uhn.fhir.context.FhirContext;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;

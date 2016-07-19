@@ -27,16 +27,16 @@ import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.WriteToGoogleFitJob;
 
 /**
  * C3PRO
- * <p/>
+ *
  * Created by manny Weber on 06/29/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,8 +74,7 @@ public class GoogleFitAgent {
 
     /**
      * Calls back with the total number of steps taken between two dates.
-     * Remember to subscribe to the step count. Add permission to the AndroidManifest.xml:
-     * <uses-permission android:name="android.permission.FITNESS_ACTIVITY_READ" />
+     * Remember to subscribe to the step count. Add permission to the AndroidManifest.xml
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ))
      */
     public static void getAggregateStepCountBetween(Date start, Date end, String requestID, QuantityReceiver quantityReceiver) {
@@ -86,7 +85,7 @@ public class GoogleFitAgent {
     /**
      * Calls back with the latest entry of the user's height. If no entry is found, a Quantity of zero
      * is returned.
-     * Remember to add permission to the AndroidManifest.xml: <uses-permission android:name="android.permission.BODY_SENSORS" />
+     * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
     public static void getLatestSampleOfHeight(String requestID, QuantityReceiver quantityReceiver) {
@@ -97,7 +96,7 @@ public class GoogleFitAgent {
     /**
      * Calls back with the latest entry of the user's weight. If no entry is found, a Quantity of zero
      * is returned.
-     * Remember to add permission to the AndroidManifest.xml: <uses-permission android:name="android.permission.BODY_SENSORS" />
+     * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
     public static void getLatestSampleOfWeight(String requestID, QuantityReceiver quantityReceiver) {
@@ -109,7 +108,7 @@ public class GoogleFitAgent {
      * Calls back with an observation with a component with each, maximum, average, and minimum weight
      * between the specified dates. If no entries are found, the observation will not contain any
      * components.
-     * Remember to add permission to the AndroidManifest.xml: <uses-permission android:name="android.permission.BODY_SENSORS" />
+     * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
     public static void getWeightSummaryBetween(Date start, Date end, String requestID, ObservationReceiver observationReceiver) {
@@ -139,7 +138,7 @@ public class GoogleFitAgent {
     /**
      * Writes a current weight reading to google fit history. The current date and time is used for
      * the data point as start and end time.
-     * Permission has to be declared in the AndroidManifest: <uses-permission android:name="android.permission.FITNESS_ACTIVITY_READ_WRITE" />
+     * Permission has to be declared in the AndroidManifest.
      * and Api and scope added when building the GoogleApiClient: .addApi(Fitness.HISTORY_API)
      * .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
      */
@@ -163,7 +162,7 @@ public class GoogleFitAgent {
     /**
      * Writes a current height reading to google fit history. The current date and time is used for
      * the data point as start and end time.
-     * Permission has to be declared in the AndroidManifest: <uses-permission android:name="android.permission.FITNESS_ACTIVITY_READ_WRITE" />
+     * Permission has to be declared in the AndroidManifest.
      * and Api and scope added when building the GoogleApiClient: .addApi(Fitness.HISTORY_API)
      * .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
      */
