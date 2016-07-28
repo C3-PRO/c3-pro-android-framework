@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">c3-pro-android-framework</string>
+    <string name="c3_confirm_consent">By agreeing you confirm that you read the consent and that you wish to take part in this research study.</string>
+    <string name="c3_passcode_instruction">You will now be asked to create a passcode.\n\nThis protects your data from unauthorized access should you hand your phone to a friend.</string>
+
 </resources>

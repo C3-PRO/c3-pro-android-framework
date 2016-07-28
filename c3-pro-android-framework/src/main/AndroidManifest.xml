@@ -7,6 +7,10 @@
             android:name="org.researchstack.backbone.ui.ViewTaskActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Base.Theme.Backbone" />
+        <activity
+            android:name="org.researchstack.backbone.ui.ViewWebDocumentActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Base.Theme.Backbone" />
 
     </application>
 
