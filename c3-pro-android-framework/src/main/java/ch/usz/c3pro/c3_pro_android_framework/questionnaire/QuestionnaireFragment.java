@@ -16,11 +16,9 @@ import org.researchstack.backbone.ui.ViewTaskActivity;
 
 import java.io.Serializable;
 
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
-import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
-import ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs.PrepareTaskJob;
-import ch.usz.c3pro.c3_pro_android_framework.questionnaire.jobs.QuestionnaireResponseJob;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3PRO
@@ -81,10 +79,10 @@ public class QuestionnaireFragment extends Fragment {
 
     public void prepareTaskViewActivity() {
         if (mTask == null) {
-            PrepareTaskJob job = new PrepareTaskJob(questionnaire, questionnaire.getId(), new DataQueue.CreateTaskCallback() {
+            Pyro.getQuestionnaireAsTaskAsync(questionnaire, questionnaire.getId(), new Callback.TaskCallback() {
                 @Override
-                public void onSuccess(String requestID, Task task) {
-                    mTask = task;
+                public void onSuccess(String requestID, Task result) {
+                    mTask = result;
                     fragmentListener.whenTaskReady(requestID);
                 }
 
@@ -93,7 +91,6 @@ public class QuestionnaireFragment extends Fragment {
                     fragmentListener.whenCancelledOrFailed(code);
                 }
             });
-            C3PRO.getJobManager().addJobInBackground(job);
         } else {
             fragmentListener.whenTaskReady(questionnaire.getId());
         }
@@ -117,19 +114,19 @@ public class QuestionnaireFragment extends Fragment {
             switch (resultCode) {
                 case AppCompatActivity.RESULT_OK:
                     final TaskResult taskResult = (TaskResult) data.getExtras().get(ViewTaskActivity.EXTRA_TASK_RESULT);
-                    QuestionnaireResponseJob job = new QuestionnaireResponseJob(taskResult, taskResult.getIdentifier(), new DataQueue.CreateQuestionnaireResponseCallback() {
+
+                    Pyro.getTaskResultAsQuestionnaireResponseAsync(taskResult, taskResult.getIdentifier(), new Callback.QuestionnaireResponseReceiver() {
                         @Override
-                        public void onSuccess(String requestID, QuestionnaireResponse questionnaireResponse) {
-                            fragmentListener.whenCompleted(taskResult.getIdentifier(), questionnaireResponse);
+                        public void onSuccess(String requestID, QuestionnaireResponse result) {
+                            fragmentListener.whenCompleted(taskResult.getIdentifier(), result);
                         }
 
                         @Override
                         public void onFail(String requestID, C3PROErrorCode code) {
                             fragmentListener.whenCancelledOrFailed(code);
                         }
-
                     });
-                    C3PRO.getJobManager().addJobInBackground(job);
+
                     break;
                 case AppCompatActivity.RESULT_CANCELED:
                     fragmentListener.whenCancelledOrFailed(C3PROErrorCode.RESULT_CANCELLED);

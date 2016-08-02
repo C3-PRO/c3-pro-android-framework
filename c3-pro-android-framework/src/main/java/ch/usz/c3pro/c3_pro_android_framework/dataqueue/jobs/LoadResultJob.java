@@ -11,6 +11,7 @@ import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 
 import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3PRO
@@ -34,18 +35,11 @@ public abstract class LoadResultJob<T> extends Job {
     private static int HANDLER_MESSAGE_RESULT_READY = 1;
     protected String request;
     private Handler dataHandler;
-    protected LoadResultCallback resultCallback;
+    protected Callback.LoadResultCallback resultCallback;
 
-    /**
-     *
-     * */
-    public interface LoadResultCallback<T> {
-        void onSuccess(String requestID, T result);
 
-        void onFail(String requestID, C3PROErrorCode code);
-    }
 
-    public LoadResultJob(Params jobParams, final String requestID, final LoadResultCallback callback) {
+    public LoadResultJob(Params jobParams, final String requestID, final Callback.LoadResultCallback callback) {
         super(jobParams);
         request = requestID;
         resultCallback = callback;

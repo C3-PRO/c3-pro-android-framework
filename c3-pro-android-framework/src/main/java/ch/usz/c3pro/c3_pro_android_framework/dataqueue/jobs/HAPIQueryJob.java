@@ -7,8 +7,9 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3PRO
@@ -38,14 +39,14 @@ import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
  * from it. Use a Handler to send the result to the main thread first.
  * */
 public class HAPIQueryJob extends Job {
-    private DataQueue.QueryPoster queryPoster;
+    private Callback.QueryPoster queryPoster;
     private String url;
 
     /**
      * The QueryPoster will get a generic HAPI client for the specified URL on which it can run its
      * query. If you add multiple jobs to the queue with the same singleINstanceID, only one will run.
      * */
-    public HAPIQueryJob(String singleInstanceID, DataQueue.QueryPoster poster, String FHIRServerURL){
+    public HAPIQueryJob(String singleInstanceID, Callback.QueryPoster poster, String FHIRServerURL){
         super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(singleInstanceID));
         queryPoster = poster;
         url = FHIRServerURL;
@@ -56,8 +57,8 @@ public class HAPIQueryJob extends Job {
      * which it can run its query. If you add multiple jobs to the queue with the same
      * singleINstanceID, only one will run.
      * */
-    public HAPIQueryJob(String singleInstanceID, DataQueue.QueryPoster poster){
-        this(singleInstanceID, poster, C3PRO.getDataQueue().getFHIRServerURL());
+    public HAPIQueryJob(String singleInstanceID, Callback.QueryPoster poster){
+        this(singleInstanceID, poster,DataQueue.getInstance().getFHIRServerURL());
     }
 
     @Override
@@ -67,7 +68,7 @@ public class HAPIQueryJob extends Job {
 
     @Override
     public void onRun() throws Throwable {
-        queryPoster.runQuery(C3PRO.getFhirContext().newRestfulGenericClient(url));
+        queryPoster.runQuery(Pyro.getFhirContext().newRestfulGenericClient(url));
     }
 
     @Override

@@ -4,7 +4,9 @@ import com.birbit.android.jobqueue.Params;
 
 import org.hl7.fhir.dstu3.model.Bundle;
 
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
+import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3PRO
@@ -38,7 +40,7 @@ public class ReadResourceJob extends LoadResultJob<Bundle> {
      * searchURL defines the search, can be absolute or relative to the FHIRServerURL, where the resource is
      * loaded from. requestID will be passed back for identification with the result to the resourceReceiver.
      * */
-    public ReadResourceJob(final String requestID, String searchURL, LoadResultCallback callback, String FHIRServerURL){
+    public ReadResourceJob(final String requestID, String searchURL, Callback.LoadResultCallback callback, String FHIRServerURL){
         super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID), requestID, callback);
         search = searchURL;
         url = FHIRServerURL;
@@ -49,8 +51,8 @@ public class ReadResourceJob extends LoadResultJob<Bundle> {
      * the C3PRO, where the resource is loaded from. requestID will be passed back for
      * identification with the result to the resourceReceiver.
      * */
-    public ReadResourceJob(String requestID, String searchURL, LoadResultCallback callback){
-        this(requestID, searchURL, callback, C3PRO.getDataQueue().getFHIRServerURL());
+    public ReadResourceJob(String requestID, String searchURL, Callback.LoadResultCallback callback){
+        this(requestID, searchURL, callback, DataQueue.getInstance().getFHIRServerURL());
     }
 
 
@@ -61,7 +63,7 @@ public class ReadResourceJob extends LoadResultJob<Bundle> {
 
     @Override
     public void onRun() throws Throwable {
-        Bundle response = C3PRO.getFhirContext().newRestfulGenericClient(url).search()
+        Bundle response = Pyro.getFhirContext().newRestfulGenericClient(url).search()
                 .byUrl(search)
                 .returnBundle(Bundle.class)
                 .execute();

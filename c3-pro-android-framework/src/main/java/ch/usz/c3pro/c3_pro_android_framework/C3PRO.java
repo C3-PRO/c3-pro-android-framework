@@ -1,3 +1,4 @@
+/*
 package ch.usz.c3pro.c3_pro_android_framework;
 
 import android.content.Context;
@@ -9,6 +10,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
 
 
+*/
 /**
  * C3PRO
  *
@@ -26,18 +28,21 @@ import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
 
+
+*/
 /**
  *  * This class will provide the FHIR Context and, if you initialize it with a FHIR Server URL, a
  *  dataqueue as a singleton. For the data to outlive activity lifecycles, it should be initialized
  *  in your application onCreate.
  *  The FHIR Context is a costly object and you should only keep one instance around.
- * */
+ * *//*
+
 public class C3PRO {
     private static FhirContext fhirContext;
-    private static JobManager jobManager;
     private static DataQueue dataQueue;
+    private static Context appContext;
 
 
 
@@ -46,13 +51,13 @@ public class C3PRO {
 
     public static void init(Context context, String FHIRServerURL) {
         initFhirContext();
-        initJobManager(context);
-        initDataQueue(FHIRServerURL);
+        initDataQueue(context, FHIRServerURL);
+        initContext(context);
     }
 
     public static void init(Context context) {
         initFhirContext();
-        initJobManager(context);
+        initContext(context);
     }
 
     public static void initFhirContext() {
@@ -61,15 +66,15 @@ public class C3PRO {
         }
     }
 
-    public static void initJobManager(Context context) {
-        if (jobManager == null) {
-            jobManager = new JobManager(getDefaultBuilder(context).build());
+    public static void initDataQueue(Context context, String FHIRServerURL){
+        if (dataQueue == null){
+            dataQueue = new DataQueue(FHIRServerURL, new JobManager(getDefaultBuilder(context).build()));
         }
     }
 
-    public static void initDataQueue(String FHIRServerURL){
-        if (dataQueue == null){
-            dataQueue = new DataQueue(FHIRServerURL, getJobManager());
+    public static void initContext(Context context){
+        if (appContext == null){
+            appContext = context;
         }
     }
 
@@ -77,17 +82,17 @@ public class C3PRO {
         return fhirContext;
     }
 
-    public static JobManager getJobManager() {
-        return jobManager;
-    }
-
     public static DataQueue getDataQueue(){
         return dataQueue;
+    }
+    public static Context getAppContext(){
+        return appContext;
     }
 
     private static Configuration.Builder getDefaultBuilder(Context context) {
         Configuration.Builder builder = new Configuration.Builder(context)
-                /**.customLogger(new CustomLogger() {
+                */
+/**.customLogger(new CustomLogger() {
                     private static final String TAG = "JOBMANAGER";
 
                     @Override
@@ -114,7 +119,8 @@ public class C3PRO {
                     public void v(String text, Object... args) {
 
                     }
-                })*/
+                })*//*
+
                 .minConsumerCount(1)//always keep at least one consumer alive
                 .maxConsumerCount(3)//up to 3 consumers at a time
                 .loadFactor(3)//3 jobs per consumer
@@ -122,3 +128,4 @@ public class C3PRO {
         return builder;
     }
 }
+*/

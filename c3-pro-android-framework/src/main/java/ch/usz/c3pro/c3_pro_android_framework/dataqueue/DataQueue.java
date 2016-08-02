@@ -1,32 +1,17 @@
 package ch.usz.c3pro.c3_pro_android_framework.dataqueue;
 
-import android.content.res.Resources;
+import android.content.Context;
 
 import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.JobManager;
+import com.birbit.android.jobqueue.config.Configuration;
 
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Questionnaire;
-import org.hl7.fhir.dstu3.model.QuestionnaireResponse;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.researchstack.backbone.task.Task;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.client.IGenericClient;
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.CreateResourceJob;
-import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadQuestionnaireFromURLJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadResourceJob;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 
 /**
@@ -57,47 +42,26 @@ import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadResourceJob;
 public class DataQueue {
     public static String UPLOAD_GROUP_TAG = "FHIR_UPLOAD_GROUP";
 
+    private static DataQueue instance = null;
     private JobManager jobManager;
     private String server;
 
-    /**
-     * The ReceiveBundleCallback interface is used to pass back downloaded resources in a FHIR Bundle.
-     * */
-    public interface ReceiveBundleCallback extends LoadResultJob.LoadResultCallback<Bundle>{
+    public static void init (Context context, String FHIRServerURL){
+        instance = new DataQueue(FHIRServerURL, new JobManager(getDefaultBuilder(context).build()));
     }
 
-    /**
-     * The CreateTaskCallback interface is used to pass back Tasks that were created from Questionnaires.
-     * */
-    public interface CreateTaskCallback extends LoadResultJob.LoadResultCallback<Task> {
-    }
-
-    /**
-     * The CreateQuestionnaireCallback interface is used to pass back Questionnaires.
-     * */
-    public interface CreateQuestionnaireCallback extends LoadResultJob.LoadResultCallback<Questionnaire> {
-    }
-
-    /**
-     * The CreateTaskCallback interface is used to pass back Tasks that were created from Questionnaires.
-     * */
-    public interface CreateQuestionnaireResponseCallback extends LoadResultJob.LoadResultCallback<QuestionnaireResponse> {
-    }
-
-
-    /**
-     * Interface needed for a HAPIQueryJob. Implement the runQuery method and run a HAPI Query on the
-     * provided client.
-     */
-    public interface QueryPoster {
-        void runQuery(IGenericClient client);
+    public static DataQueue getInstance(){
+        if (instance == null){
+            //error
+        }
+        return instance;
     }
 
     /**
      * The DataQueue needs the URL to a FHIR Server and a JobManager to run. A DataQueue is provided
      * as a singleton by the C3PRO class, no need to have another instance of it around!
      * */
-    public DataQueue(String FHIRServerURL, JobManager manager) {
+    private DataQueue(String FHIRServerURL, JobManager manager) {
         jobManager = manager;
         server = FHIRServerURL;
     }
@@ -115,7 +79,7 @@ public class DataQueue {
      * the C3PRO, where the resource is loaded from. requestID will be passed back for
      * identification with the result to the resourceReceiver.
      * */
-    public void read(String requestID, String searchURL, ReceiveBundleCallback callback) {
+    public void read(String requestID, String searchURL, Callback.ReceiveBundleCallback callback) {
         ReadResourceJob job = new ReadResourceJob(requestID, searchURL, callback);
         jobManager.addJobInBackground(job);
     }
@@ -123,7 +87,7 @@ public class DataQueue {
     /**
      * reads a Questionnaire from a json file at an URL
      * */
-    public void getJsonQuestionnaireFromURL(String requestID, String url, CreateQuestionnaireCallback callback){
+    public void getJsonQuestionnaireFromURL(String requestID, String url, Callback.QuestionnaireReceiver callback){
         ReadQuestionnaireFromURLJob job = new ReadQuestionnaireFromURLJob(requestID, url, callback);
         jobManager.addJobInBackground(job);
     }
@@ -142,49 +106,41 @@ public class DataQueue {
         return server;
     }
 
+    private static Configuration.Builder getDefaultBuilder(Context context) {
+        Configuration.Builder builder = new Configuration.Builder(context)
+/**.customLogger(new CustomLogger() {
+ private static final String TAG = "JOBMANAGER";
 
-    /**
-     * loads the content of the file corresponding to the rawID into a string.
-     * */
-    public static String getRawFileAsString(Resources res, int rawID) {
+ @Override
+ public boolean isDebugEnabled() {
+ return true;
+ }
 
-        //InputStream is = res.openRawResource(R.raw.questionnaire_textvalues);
-        InputStream is = res.openRawResource(rawID);
+ @Override
+ public void d(String text, Object... args) {
+ Log.d(TAG, String.format(text, args));
+ }
 
-        Writer writer = new StringWriter();
-        char[] buffer = new char[1024];
-        try {
-            Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            int n;
-            while ((n = reader.read(buffer)) != -1) {
-                writer.write(buffer, 0, n);
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+ @Override
+ public void e(Throwable t, String text, Object... args) {
+ Log.e(TAG, String.format(text, args), t);
+ }
 
-        return writer.toString();
-    }
+ @Override
+ public void e(String text, Object... args) {
+ Log.e(TAG, String.format(text, args));
+ }
 
-    /**
-     * returns a Questionnaire from the jason with corresponding to the rawID from the "raw" resource
-     * folder.
-     * */
-    public static Questionnaire getQuestionnaireFromRawJson(Resources res, int rawID) {
+ @Override
+ public void v(String text, Object... args) {
 
-        IParser parser = C3PRO.getFhirContext().newJsonParser();
+ }
+ })*/
 
-        String json = getRawFileAsString(res, rawID);
-
-        return parser.parseResource(Questionnaire.class, json);
-
+                .minConsumerCount(1)//always keep at least one consumer alive
+                .maxConsumerCount(3)//up to 3 consumers at a time
+                .loadFactor(3)//3 jobs per consumer
+                .consumerKeepAlive(120);//wait 2 minute
+        return builder;
     }
 }

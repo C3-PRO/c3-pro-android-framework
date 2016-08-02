@@ -11,32 +11,32 @@ import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 
 import org.hl7.fhir.dstu3.model.Observation;
-import org.hl7.fhir.dstu3.model.Quantity;
+
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadAggregateStepCountJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadHeightJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadWeightJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.ReadWeightSummaryJob;
-import ch.usz.c3pro.c3_pro_android_framework.googlefit.jobs.WriteToGoogleFitJob;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadAggregateStepCountAsyncTask;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadHeightAsyncTask;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadWeightAsyncTask;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadWeightSummaryAsyncTask;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.WriteToGoogleFitAsyncTask;
 
 /**
  * C3PRO
- *
+ * <p/>
  * Created by manny Weber on 06/29/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,18 +53,6 @@ public class GoogleFitAgent {
     public static final String LTAG = "LC3P";
     private static GoogleApiClient apiClient;
 
-    /**
-     * Interface used to pass back Quantities read from Google Fit.
-     */
-    public interface QuantityReceiver extends LoadResultJob.LoadResultCallback<Quantity>{
-    }
-
-    /**
-     * Interface used to pass back multiple Quantities read from Google Fit
-     */
-    public interface ObservationReceiver extends LoadResultJob.LoadResultCallback<Observation>{
-    }
-
     private void GoogleFitAgent() {
     }
 
@@ -77,9 +65,8 @@ public class GoogleFitAgent {
      * Remember to subscribe to the step count. Add permission to the AndroidManifest.xml
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ))
      */
-    public static void getAggregateStepCountBetween(Date start, Date end, String requestID, QuantityReceiver quantityReceiver) {
-        ReadAggregateStepCountJob job = new ReadAggregateStepCountJob(apiClient, requestID, start, end, quantityReceiver);
-        C3PRO.getJobManager().addJobInBackground(job);
+    public static void getAggregateStepCountBetween(Date start, Date end, String requestID, Callback.QuantityReceiver quantityReveiver) {
+        new ReadAggregateStepCountAsyncTask(apiClient, requestID, start, end, quantityReveiver).execute();
     }
 
     /**
@@ -88,9 +75,8 @@ public class GoogleFitAgent {
      * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
-    public static void getLatestSampleOfHeight(String requestID, QuantityReceiver quantityReceiver) {
-        ReadHeightJob job = new ReadHeightJob(apiClient, requestID, quantityReceiver);
-        C3PRO.getJobManager().addJobInBackground(job);
+    public static void getLatestSampleOfHeight(String requestID, Callback.QuantityReceiver quantityReceiver) {
+        new ReadHeightAsyncTask(apiClient, requestID, quantityReceiver).execute();
     }
 
     /**
@@ -99,9 +85,8 @@ public class GoogleFitAgent {
      * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
-    public static void getLatestSampleOfWeight(String requestID, QuantityReceiver quantityReceiver) {
-        ReadWeightJob job = new ReadWeightJob(apiClient, requestID, quantityReceiver);
-        C3PRO.getJobManager().addJobInBackground(job);
+    public static void getLatestSampleOfWeight(String requestID, Callback.QuantityReceiver quantityReceiver) {
+        new ReadWeightAsyncTask(apiClient, requestID, quantityReceiver).execute();
     }
 
     /**
@@ -111,9 +96,9 @@ public class GoogleFitAgent {
      * Remember to add permission to the AndroidManifest.xml.
      * and add the scope to the GoogleApiClient Builder .addScope(new Scope(Scopes.FITNESS_BODY_READ))
      */
-    public static void getWeightSummaryBetween(Date start, Date end, String requestID, ObservationReceiver observationReceiver) {
-        ReadWeightSummaryJob job = new ReadWeightSummaryJob(apiClient, requestID, start, end, observationReceiver);
-        C3PRO.getJobManager().addJobInBackground(job);
+    public static void getWeightSummaryBetween(Date start, Date end, String requestID, Callback.ObservationReceiver observationReceiver) {
+
+        new ReadWeightSummaryAsyncTask(apiClient, requestID, start, end, observationReceiver).execute();
     }
 
     /**
@@ -155,8 +140,7 @@ public class GoogleFitAgent {
         dataPoint = dataPoint.setFloatValues(new Float(weight));
         dataSet.add(dataPoint);
 
-        WriteToGoogleFitJob job = new WriteToGoogleFitJob(apiClient, dataSet);
-        C3PRO.getJobManager().addJobInBackground(job);
+        new WriteToGoogleFitAsyncTask(apiClient, dataSet).execute();
     }
 
     /**
@@ -179,7 +163,6 @@ public class GoogleFitAgent {
         dataPoint = dataPoint.setFloatValues(new Float(height));
         dataSet.add(dataPoint);
 
-        WriteToGoogleFitJob job = new WriteToGoogleFitJob(apiClient, dataSet);
-        C3PRO.getJobManager().addJobInBackground(job);
+        new WriteToGoogleFitAsyncTask(apiClient, dataSet).execute();
     }
 }

@@ -12,8 +12,9 @@ import java.net.URLConnection;
 import java.util.Scanner;
 
 import ca.uhn.fhir.parser.IParser;
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3PRO
@@ -37,7 +38,7 @@ public class ReadQuestionnaireFromURLJob extends LoadResultJob<Questionnaire> {
     private String loadURL;
 
 
-    public ReadQuestionnaireFromURLJob(final String requestID, String URL, LoadResultJob.LoadResultCallback callback) {
+    public ReadQuestionnaireFromURLJob(final String requestID, String URL, Callback.LoadResultCallback callback) {
         super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID), requestID, callback);
         loadURL = URL;
     }
@@ -62,7 +63,7 @@ public class ReadQuestionnaireFromURLJob extends LoadResultJob<Questionnaire> {
             }
             scanner.close();
             if (!Strings.isNullOrEmpty(qString)) {
-                IParser parser = C3PRO.getFhirContext().newJsonParser();
+                IParser parser = Pyro.getFhirContext().newJsonParser();
                 Questionnaire q = parser.parseResource(Questionnaire.class, qString);
                 return q;
             }

@@ -12,8 +12,8 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
-import ch.usz.c3pro.c3_pro_android_framework.C3PRO;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 
 /**
  * C3PRO
@@ -62,7 +62,7 @@ public class CreateResourceJob extends Job {
      * persist even when app state changes.
      * */
     public CreateResourceJob(IBaseResource resource){
-        this(resource, C3PRO.getDataQueue().getFHIRServerURL());
+        this(resource, DataQueue.getInstance().getFHIRServerURL());
     }
 
     @Override
@@ -72,7 +72,7 @@ public class CreateResourceJob extends Job {
 
     @Override
     public void onRun() throws Throwable {
-        IGenericClient client = C3PRO.getFhirContext().newRestfulGenericClient(serverURL);
+        IGenericClient client = Pyro.getFhirContext().newRestfulGenericClient(serverURL);
         MethodOutcome outcome = client.create().resource(uploadResource).prettyPrint().encodedJson().execute();
         //TODO decide what to do when upload does not return anything
         Log.d("SENDJOBS", "created resource with id "+outcome.getId().getValue());
