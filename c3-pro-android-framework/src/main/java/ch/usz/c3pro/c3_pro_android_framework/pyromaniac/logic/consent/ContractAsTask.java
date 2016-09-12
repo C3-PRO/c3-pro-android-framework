@@ -38,6 +38,7 @@ import java.util.List;
 
 import ch.usz.c3pro.c3_pro_android_framework.R;
 import ch.usz.c3pro.c3_pro_android_framework.consent.ViewConsentTaskActivity;
+import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire.ConditionalOrderedTask;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire.ResultRequirement;
 
@@ -66,8 +67,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire.Resu
  * */
 public class ContractAsTask {
     // debug
-    public static final String LTAG = "LC3P";
-    public static boolean skip = true;
+    public static boolean skip = false;
 
     private static String kContractTermConsentSectionType = "http://researchkit.org/docs/Constants/ORKConsentSectionType";
     private static String kContractTermConsentSectionExtension = "http://fhir-registry.smarthealthit.org/StructureDefinition/ORKConsentSection";
@@ -358,7 +358,7 @@ public class ContractAsTask {
                     //TODO animation
                     break;
                 default:
-                    Log.d(LTAG, "no matching extention");
+                    Log.d(Logging.logTag, "no matching extention");
             }
         }
         return consentSection;
@@ -394,7 +394,7 @@ public class ContractAsTask {
                 }
 
             } else {
-                Log.d(LTAG, "ignoring consent section system " + coding.getSystem() + ". Expecting " + kContractTermConsentSectionType);
+                Log.d(Logging.logTag, "ignoring consent section system " + coding.getSystem() + ". Expecting " + kContractTermConsentSectionType);
             }
         }
         return ConsentSection.Type.Custom;
