@@ -177,7 +177,7 @@ public class ContractAsTask {
         // Create consent signature object and set what info is required
         // TODO with properties etc
         ConsentSignature signature = new ConsentSignature();
-        signature.setRequiresName(options.reqiresName());
+        signature.setRequiresName(options.requiresName());
         signature.setRequiresSignatureImage(options.requiresSignature());
         signature.setRequiresBirthDate(options.requiresBirthday());
 

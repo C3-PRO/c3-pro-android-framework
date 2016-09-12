@@ -57,7 +57,7 @@ public class ConsentTaskOptions {
     public boolean requiresSignature(){
         return requiresSignature;
     }
-    public boolean reqiresName(){return reqiresName();}
+    public boolean requiresName(){return requiresName;}
     public boolean requiresBirthday(){return  requiresBirthday;}
 
 
