@@ -10,14 +10,11 @@ import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 
-import org.hl7.fhir.dstu3.model.Observation;
-
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.LoadResultJob;
+import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadAggregateStepCountAsyncTask;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadHeightAsyncTask;
@@ -26,7 +23,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.ReadWeightSummaryA
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.WriteToGoogleFitAsyncTask;
 
 /**
- * C3PRO
+ * C3-PRO
  * <p/>
  * Created by manny Weber on 06/29/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -50,7 +47,6 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.WriteToGoogleFitAs
  * may have to be subscribed to in order to get the information wanted.
  * */
 public class GoogleFitAgent {
-    public static final String LTAG = "LC3P";
     private static GoogleApiClient apiClient;
 
     private void GoogleFitAgent() {
@@ -105,16 +101,16 @@ public class GoogleFitAgent {
      * For debug: prints the DataSet to the Log Console
      * */
     private static void dumpDataSet(DataSet dataSet) {
-        Log.d(LTAG, "Data returned for Data type: " + dataSet.getDataType().getName());
+        Log.d(Logging.logTag, "Data returned for Data type: " + dataSet.getDataType().getName());
         DateFormat dateFormat = DateFormat.getTimeInstance();
 
         for (DataPoint dp : dataSet.getDataPoints()) {
-            Log.d(LTAG, "Data point:");
-            Log.d(LTAG, "\tType: " + dp.getDataType().getName());
-            Log.d(LTAG, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
-            Log.d(LTAG, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
+            Log.d(Logging.logTag, "Data point:");
+            Log.d(Logging.logTag, "\tType: " + dp.getDataType().getName());
+            Log.d(Logging.logTag, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
+            Log.d(Logging.logTag, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
             for (Field field : dp.getDataType().getFields()) {
-                Log.d(LTAG, "\tField: " + field.getName() +
+                Log.d(Logging.logTag, "\tField: " + field.getName() +
                         " Value: " + dp.getValue(field));
             }
         }

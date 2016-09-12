@@ -1,6 +1,5 @@
-package ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs;
+package ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async;
 
-import com.birbit.android.jobqueue.Params;
 import com.google.common.base.Strings;
 
 import org.hl7.fhir.dstu3.model.Questionnaire;
@@ -14,20 +13,19 @@ import java.util.Scanner;
 import ca.uhn.fhir.parser.IParser;
 import ch.usz.c3pro.c3_pro_android_framework.errors.C3PROErrorCode;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
-import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * C3-PRO
- *
- * Created by manny Weber on 06/22/2016.
+ * <p/>
+ * Created by manny Weber on 08/02/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,30 +34,21 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
  */
 
 /**
- * This job reads a FHIR Questionnaire from a json file at the given URL
+ * This Async Task will read a FHIR {@link Questionnaire} directly from a json file at the specified
+ * URL. The json file has to contain a valid dstu3 FHIR Questionnaire.
  * */
-public class ReadQuestionnaireFromURLJob extends LoadResultJob<Questionnaire> {
+public class ReadJasonQuestionnaireFromURLAsyncTask extends LoadResultAsyncTask<Questionnaire> {
     private String loadURL;
 
-
-    public ReadQuestionnaireFromURLJob(final String requestID, String URL, Callback.LoadResultCallback callback) {
-        super(new Params(Priority.HIGH).requireNetwork().singleInstanceBy(requestID), requestID, callback);
+    public ReadJasonQuestionnaireFromURLAsyncTask(String requestID, String URL, Callback.QuestionnaireReceiver receiver){
+        super(requestID, receiver);
         loadURL = URL;
     }
 
     @Override
-    public void onAdded() {
-
-    }
-
-    @Override
-    public void onRun() throws Throwable {
-        returnResult(readQuestionnaire(loadURL));
-    }
-
-    private Questionnaire readQuestionnaire(String qURL) {
+    protected Questionnaire doInBackground(Void... params) {
         try {
-            URLConnection connection = new URL(qURL).openConnection();
+            URLConnection connection = new URL(loadURL).openConnection();
             String qString = "";
             Scanner scanner = new Scanner(connection.getInputStream(), "UTF-8");
             while (scanner.hasNextLine()) {
@@ -73,9 +62,9 @@ public class ReadQuestionnaireFromURLJob extends LoadResultJob<Questionnaire> {
             }
 
         } catch (MalformedURLException e) {
-            resultCallback.onFail(request, C3PROErrorCode.CAUGHT_IO_EXCEPTION.addThrowable(e));
+            resultCallback.onFail(requestID, C3PROErrorCode.CAUGHT_IO_EXCEPTION);
         } catch (IOException e) {
-            resultCallback.onFail(request, C3PROErrorCode.CAUGHT_IO_EXCEPTION.addThrowable(e));
+            resultCallback.onFail(requestID, C3PROErrorCode.CAUGHT_IO_EXCEPTION);
         }
         return new Questionnaire();
     }

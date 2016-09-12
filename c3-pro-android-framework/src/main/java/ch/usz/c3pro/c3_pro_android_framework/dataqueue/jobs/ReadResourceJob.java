@@ -9,7 +9,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.

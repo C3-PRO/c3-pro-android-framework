@@ -10,11 +10,11 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 
-import ch.usz.c3pro.c3_pro_android_framework.C3PROErrorCode;
+import ch.usz.c3pro.c3_pro_android_framework.errors.C3PROErrorCode;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 07/15/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -31,6 +31,10 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Generic Class to load a resource in the background and loop it back to the UI thread before returning it.
+ * */
 public abstract class LoadResultJob<T> extends Job {
     private static int HANDLER_MESSAGE_RESULT_READY = 1;
     protected String request;

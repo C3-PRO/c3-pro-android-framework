@@ -14,7 +14,7 @@ import org.hl7.fhir.dstu3.model.Questionnaire;
 import java.util.ArrayList;
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 06/27/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -54,7 +54,12 @@ public class QuestionnaireAdapter extends ArrayAdapter<Questionnaire> {
                     .inflate(android.R.layout.simple_list_item_1, parent, false);
 
             viewHolder = new ViewHolder();
-            viewHolder.itemView = (TextView) convertView.findViewById(android.R.id.text1);
+
+            TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
+            ViewGroup.LayoutParams params = textView.getLayoutParams();
+            params.height = 100;
+            textView.setLayoutParams(params);
+            viewHolder.itemView = textView;
 
             convertView.setTag(viewHolder);
         } else {

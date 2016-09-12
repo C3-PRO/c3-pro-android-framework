@@ -1,6 +1,7 @@
 package ch.usz.c3pro.c3_pro_android_framework.dataqueue;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.JobManager;
@@ -11,11 +12,12 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.CreateResourceJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadQuestionnaireFromURLJob;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.jobs.ReadResourceJob;
+import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -34,15 +36,14 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
  */
 
 /**
- * This DataQueue will manage async jobs to upload and download data from the FHIRServer as well as
- * converting files between HAPI FHIR and ResearchStack. It is provided by the C3PRO class.
- * Set up initialize the C3PRO class in the onCreate method of your application and access the
- * Queue through it.
+ * This DataQueue will manage async jobs to upload and download data from the FHIRServer.
+ * Initialize the Class in the onCreate method of your application and access the
+ * Queue as a Singleton.
  */
 public class DataQueue {
     public static String UPLOAD_GROUP_TAG = "FHIR_UPLOAD_GROUP";
 
-    private static DataQueue instance = null;
+    protected static DataQueue instance = null;
     private JobManager jobManager;
     private String server;
 
@@ -52,7 +53,7 @@ public class DataQueue {
 
     public static DataQueue getInstance(){
         if (instance == null){
-            //error
+            Log.e(Logging.logTag, "DataQueue was accessed without being initialized first. Initialize the DataQueue in the onCreate method of your application.");
         }
         return instance;
     }
@@ -61,16 +62,16 @@ public class DataQueue {
      * The DataQueue needs the URL to a FHIR Server and a JobManager to run. A DataQueue is provided
      * as a singleton by the C3PRO class, no need to have another instance of it around!
      * */
-    private DataQueue(String FHIRServerURL, JobManager manager) {
+    protected DataQueue(String FHIRServerURL, JobManager manager) {
         jobManager = manager;
         server = FHIRServerURL;
     }
 
     /**
-     * Creates the FHIR resource on the server provided at the setup of C3PRO.
+     * Creates the FHIR resource on the server provided at the initialization of the DataQueue.
      * */
-    public void create(IBaseResource resource) {
-        CreateResourceJob job = new CreateResourceJob(resource, server);
+    public void create(IBaseResource resource, Callback.UploadCallback callback) {
+        CreateResourceJob job = new CreateResourceJob(resource, server, callback);
         jobManager.addJobInBackground(job);
     }
 
@@ -85,7 +86,7 @@ public class DataQueue {
     }
 
     /**
-     * reads a Questionnaire from a json file at an URL
+     * reads a FHIR Questionnaire from a json file at the given URL
      * */
     public void getJsonQuestionnaireFromURL(String requestID, String url, Callback.QuestionnaireReceiver callback){
         ReadQuestionnaireFromURLJob job = new ReadQuestionnaireFromURLJob(requestID, url, callback);
@@ -100,13 +101,13 @@ public class DataQueue {
     }
 
     /**
-     * returns the URL which is setup with the C3PRO
+     * returns the URL which was provided when initializing the DataQueue
      * */
     public String getFHIRServerURL() {
         return server;
     }
 
-    private static Configuration.Builder getDefaultBuilder(Context context) {
+    protected static Configuration.Builder getDefaultBuilder(Context context) {
         Configuration.Builder builder = new Configuration.Builder(context)
 /**.customLogger(new CustomLogger() {
  private static final String TAG = "JOBMANAGER";

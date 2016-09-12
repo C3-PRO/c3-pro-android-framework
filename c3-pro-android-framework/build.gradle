@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/manuelaCalavera/c3-pro-android-framework'
     gitUrl = 'https://github.com/manuelaCalavera/c3-pro-android-framework.git'
 
-    libraryVersion = '0.1.2'
+    libraryVersion = '0.1.3'
 
     developerId = 'manuelacalavera'
     developerName = 'manny Weber'
@@ -45,6 +45,10 @@ android {
     dexOptions {
         javaMaxHeapSize "3g"
     }
+    compileOptions {
+        targetCompatibility 1.7
+        sourceCompatibility 1.7
+    }
 }
 
 dependencies {
@@ -56,7 +60,7 @@ dependencies {
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.birbit:android-priority-jobqueue:2.0.0-alpha3'
     compile 'com.google.android.gms:play-services-fitness:9.2.0'
-    compile (group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-android', version: '1.5', classifier: 'dstu3') {
+    compile (group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-android', version: '1.6', classifier: 'dstu3') {
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }

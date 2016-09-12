@@ -12,7 +12,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -32,7 +32,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
  * This job can be used to asynchronously run a HAPI query. If no FHIRServerURL is provided, the
- * URL set in the dataqueue will be used. Jobs with the same singleInstanceID will only run if no
+ * URL set in the DataQueue will be used. Jobs with the same singleInstanceID will only run if no
  * other job with same ID is present in the queue. Define a QueryPoster with the query in the
  * runQuery method.
  * Be aware that the query will run on a background thread. It won't be possible to access the UI
@@ -53,7 +53,7 @@ public class HAPIQueryJob extends Job {
     }
 
     /**
-     * The QueryPoster will get a generic HAPI client for the URL specified in the C3PRO on
+     * The QueryPoster will get a generic HAPI client for the URL specified in the C3-PRO on
      * which it can run its query. If you add multiple jobs to the queue with the same
      * singleINstanceID, only one will run.
      * */

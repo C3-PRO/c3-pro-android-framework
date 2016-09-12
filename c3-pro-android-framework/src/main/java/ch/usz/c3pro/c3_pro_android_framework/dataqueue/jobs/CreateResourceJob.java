@@ -13,10 +13,13 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.IGenericClient;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.DataQueue;
+import ch.usz.c3pro.c3_pro_android_framework.errors.C3PROErrorCode;
+import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
- * C3PRO
+ * C3-PRO
  *
  * Created by manny Weber on 06/07/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
@@ -41,8 +44,9 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
  * FIFO. If no FHIRServerURL is provided, the serverURL from the C3PRO will be used.
  */
 public class CreateResourceJob extends Job {
-    private IBaseResource uploadResource;
-    private String serverURL;
+    protected IBaseResource uploadResource;
+    protected String serverURL;
+    protected Callback.UploadCallback callback;
     /**localID is needed for persistence*/
     private long localID;
 
@@ -50,10 +54,11 @@ public class CreateResourceJob extends Job {
      * Enqueues the resource to be uploaded to the provided FHIRServer. The job will persist even
      * when app state changes.
      * */
-    public CreateResourceJob(IBaseResource FHIRResource, String FHIRServerURL){
+    public CreateResourceJob(IBaseResource FHIRResource, String FHIRServerURL, Callback.UploadCallback uploadCallback){
         super(new Params(Priority.MID).requireNetwork().persist().groupBy(DataQueue.UPLOAD_GROUP_TAG));
         uploadResource = FHIRResource;
         serverURL = FHIRServerURL;
+        callback = uploadCallback;
         localID = -System.currentTimeMillis();
     }
 
@@ -61,8 +66,8 @@ public class CreateResourceJob extends Job {
      * Enqueues the resource to be uploaded to the FHIRServer defined in the C3PRO. The job will
      * persist even when app state changes.
      * */
-    public CreateResourceJob(IBaseResource resource){
-        this(resource, DataQueue.getInstance().getFHIRServerURL());
+    public CreateResourceJob(IBaseResource resource, Callback.UploadCallback uploadCallback){
+        this(resource, DataQueue.getInstance().getFHIRServerURL(), uploadCallback);
     }
 
     @Override
@@ -75,12 +80,12 @@ public class CreateResourceJob extends Job {
         IGenericClient client = Pyro.getFhirContext().newRestfulGenericClient(serverURL);
         MethodOutcome outcome = client.create().resource(uploadResource).prettyPrint().encodedJson().execute();
         //TODO decide what to do when upload does not return anything
-        Log.d("SENDJOBS", "created resource with id "+outcome.getId().getValue());
+        Log.d(Logging.asyncLogTag, "created resource with id "+outcome.getId().getValue());
     }
 
     @Override
     protected void onCancel(int cancelReason, @Nullable Throwable throwable) {
-
+        callback.onFail(uploadResource, C3PROErrorCode.JOB_CANCELLED.addThrowable(throwable));
     }
 
     @Override
