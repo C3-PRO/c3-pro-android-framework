@@ -12,7 +12,7 @@ The library is hosted at [bintray].
 To set up a project to use the C3PRO framework, the library is available on jCenter and can simply be added as a dependency:
 ```groovy
 dependencies {
-    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.1'){
+    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.4'){
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
@@ -26,7 +26,6 @@ Some packages of third party dependencies need to be excluded to avoid duplicate
 A sample application to demonstrate the setup is available [here][c3-pro-demo]
 
 A subclass of `Application` is needed and set as main application in the AndroidManifest.
-It seems that for now, multidex is needed to accomodate the large number of references in the library's dependencies. So it is necessary to enable Multidex in the application and the gradle build file.
 Most setup methods are best put in the onCreate() method of the C3PROApplication class to make sure they survive Activities' lifecycles.
 The C3PRO class is initialized with the application's context and a FHIR Server URL.
 There are also some ResearchStack settings. More details about that can be found on the [ResearchStack website][researchstack].
@@ -34,15 +33,6 @@ There are also some ResearchStack settings. More details about that can be found
 The `Application`file should look something like this:
 ```java
 public class C3PROApplication extends Application {
-
-    /* with HAPI it seemed necessary to enable multidex to accomodate the large
-    number of operations provided by the package. It seems to work without it now. Leaving it here
-    for now just in case.*/
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
-    }
 
     @Override
     public void onCreate() {
