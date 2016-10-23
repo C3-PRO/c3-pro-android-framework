@@ -8,9 +8,12 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.security.GeneralSecurityException;
 
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.client.IGenericClient;
 import ch.usz.c3pro.c3_pro_android_framework.dataqueue.EncryptedDataQueue;
 import ch.usz.c3pro.c3_pro_android_framework.errors.C3PROErrorCode;
 import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 
 /**
@@ -41,9 +44,12 @@ public class CreateResourceJobEncrypted extends CreateResourceJob {
     public void onRun() throws Throwable {
         try {
             JsonObject jasonToSend = EncryptedDataQueue.getInstance().encryptResource(uploadResource);
-            Log.d(Logging.asyncLogTag, jasonToSend.getAsString());
 
-            //TODO: send that thing to serverURL
+            IGenericClient client = Pyro.getFhirContext().newRestfulGenericClient(serverURL);
+            MethodOutcome outcome = client.create().resource(jasonToSend.getAsString()).prettyPrint().encodedJson().execute();
+
+            //TODO decide what to do when upload does not return anything
+            Log.d(Logging.asyncLogTag, "created resource with id "+outcome.getId().getValue());
 
 
         } catch (GeneralSecurityException e) {

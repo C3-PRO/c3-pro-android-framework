@@ -1,5 +1,7 @@
 package ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire;
 
+import android.util.Log;
+
 import com.google.common.base.Strings;
 
 import org.hl7.fhir.dstu3.model.Coding;
@@ -12,6 +14,7 @@ import org.researchstack.backbone.answerformat.AnswerFormat;
 import org.researchstack.backbone.answerformat.BooleanAnswerFormat;
 import org.researchstack.backbone.answerformat.ChoiceAnswerFormat;
 import org.researchstack.backbone.answerformat.DateAnswerFormat;
+import org.researchstack.backbone.answerformat.DecimalAnswerFormat;
 import org.researchstack.backbone.answerformat.IntegerAnswerFormat;
 import org.researchstack.backbone.answerformat.TextAnswerFormat;
 import org.researchstack.backbone.model.Choice;
@@ -22,6 +25,8 @@ import org.researchstack.backbone.step.Step;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import ch.usz.c3pro.c3_pro_android_framework.errors.Logging;
 
 /**
  * C3-PRO
@@ -184,8 +189,33 @@ public class QuestionnaireItemAsStep {
             case BOOLEAN:
                 return new BooleanAnswerFormat("Yes", "No");
             case DECIMAL:
-                // for decimal, there is no implementedStepBody.class, have to use integer for now
-                return new IntegerAnswerFormat(0, 1000);
+                List<Extension> minFloat = item.getExtensionsByUrl("http://hl7.org/fhir/StructureDefinition/minValue");
+                List<Extension> maxFloat = item.getExtensionsByUrl("http://hl7.org/fhir/StructureDefinition/maxValue");
+                /**Default Answer not yet used in available AnswerFormats*/
+                //Extension dflt = getDefaultAnswer(item);
+
+                if (!minFloat.isEmpty() && !maxFloat.isEmpty()) {
+                    //Type sMinVal = minVals.get(0).getValue();
+                    String sMinVal = minFloat.get(0).getValue().primitiveValue();
+                    String sMaxVal = maxFloat.get(0).getValue().primitiveValue();
+
+                    float minVal = Float.parseFloat(sMinVal);
+                    float maxVal = Float.parseFloat(sMaxVal);
+
+                    /**Default Answer not yet used in available AnswerFormats
+                     int def = minVal;
+                     if (dflt != null) {
+                     String sDef = dflt.getValue().primitiveValue();
+                     def = Integer.parseInt(sDef);
+                     }
+                     */
+
+                    // scale answer format not yet available, so have to use Integer
+                    //return new IntegerAnswerFormat(AnswerFormat. some scale answer style)
+                    return new DecimalAnswerFormat(minVal, maxVal);
+                } else {
+                    return new DecimalAnswerFormat(0, 1000);
+                }
             case INTEGER:
                 List<Extension> minVals = item.getExtensionsByUrl("http://hl7.org/fhir/StructureDefinition/minValue");
                 List<Extension> maxVals = item.getExtensionsByUrl("http://hl7.org/fhir/StructureDefinition/maxValue");
@@ -193,7 +223,6 @@ public class QuestionnaireItemAsStep {
                 //Extension dflt = getDefaultAnswer(item);
 
                 if (!minVals.isEmpty() && !maxVals.isEmpty()) {
-                    //Type sMinVal = minVals.get(0).getValue();
                     String sMinVal = minVals.get(0).getValue().primitiveValue();
                     String sMaxVal = maxVals.get(0).getValue().primitiveValue();
 
@@ -207,7 +236,6 @@ public class QuestionnaireItemAsStep {
                      def = Integer.parseInt(sDef);
                      }
                      */
-
                     // scale answer format not yet available, so have to use Integer
                     //return new IntegerAnswerFormat(AnswerFormat. some scale answer style)
                     return new IntegerAnswerFormat(minVal, maxVal);
@@ -217,14 +245,9 @@ public class QuestionnaireItemAsStep {
             case DATE:
                 return new DateAnswerFormat(AnswerFormat.DateAnswerStyle.Date);
             case DATETIME:
-                //not implementedStepBody
-                //return new DateAnswerFormat(AnswerFormat.DateAnswerStyle.DateAndTime);
-                return new DateAnswerFormat(AnswerFormat.DateAnswerStyle.Date);
-            //case "instant": return new DateAnswerFormat();
-            //case "time":
+                return new DateAnswerFormat(AnswerFormat.DateAnswerStyle.DateAndTime);
             case TIME:
-                //not implemented yet
-                return new TextAnswerFormat(5);
+                return new DateAnswerFormat(AnswerFormat.DateAnswerStyle.TimeOfDay);
             case STRING:
                 return new TextAnswerFormat(300);
             case TEXT:
@@ -334,9 +357,9 @@ public class QuestionnaireItemAsStep {
         String hlp = getQuestionHelpText(item);
         String txt = "no Text";
 
-        if (!Strings.isNullOrEmpty(instr)){
+        if (!Strings.isNullOrEmpty(instr)) {
             txt = instr;
-        } else if (!Strings.isNullOrEmpty(hlp)){
+        } else if (!Strings.isNullOrEmpty(hlp)) {
             txt = hlp;
         }
 
@@ -432,15 +455,7 @@ public class QuestionnaireItemAsStep {
             }*/
 
         }
-
-
-        /*
-        * noob error handling, don't try this at home, do it right
-        * */
-        else {
-            Choice[] choiceArray = {new Choice<String>("no choices found", "N/A")};
-            return choiceArray;
-        }
+        Log.e(Logging.logTag, "No choices were found for item: " + item.getLinkId());
         Choice[] choiceArray = {new Choice<String>("no choices found", "N/A")};
         return choiceArray;
     }

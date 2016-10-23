@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -69,8 +70,8 @@ public class EncryptedDataQueue extends DataQueue {
      * @param encryptionServerURL Server handling encrypted resources as json objects
      * @param certificatePath     path to RSA certificate containing public key
      */
-    public static void init(Context context, String FHIRServerURL, String encryptionServerURL, String certificatePath) throws CertificateException, NoSuchAlgorithmException {
-        instance = new EncryptedDataQueue(FHIRServerURL, encryptionServerURL, new JobManager(getDefaultBuilder(context).build()), context, certificatePath);
+    public static void init(Context context, String FHIRServerURL, String encryptionServerURL, String certificatePath, String pemPath) throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+        instance = new EncryptedDataQueue(FHIRServerURL, encryptionServerURL, new JobManager(getDefaultBuilder(context).build()), context, certificatePath, pemPath);
     }
 
     /**
@@ -93,10 +94,10 @@ public class EncryptedDataQueue extends DataQueue {
      * @param manager             JobManager for async jobs
      * @param certificatePath     path to RSA certificate containing public key
      */
-    private EncryptedDataQueue(String FHIRServerURL, String encryptionServerURL, JobManager manager, Context context, String certificatePath) throws CertificateException, NoSuchAlgorithmException {
+    private EncryptedDataQueue(String FHIRServerURL, String encryptionServerURL, JobManager manager, Context context, String certificatePath, String pemPath) throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
         super(FHIRServerURL, manager);
         aesUtility = new AESUtility();
-        rsaUtility = new RSAUtility(context, certificatePath);
+        rsaUtility = new RSAUtility(context, certificatePath, pemPath);
         this.encryptionServerURL = encryptionServerURL;
     }
 

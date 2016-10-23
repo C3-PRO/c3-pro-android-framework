@@ -33,8 +33,6 @@ public class ConsentTaskOptions {
 
     private boolean requiresSignature = true;
 
-
-
     private boolean requiresName = false;
     private boolean requiresBirthday = false;
 

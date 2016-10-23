@@ -64,7 +64,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire.Resu
 /**
  * This class provides the tools to convert a FHIR / C3-PRO contract to a task that assesses the
  * eligibility of the user and guides them through the consenting process.
- * */
+ */
 public class ContractAsTask {
     // debug
     public static boolean skip = false;
@@ -72,7 +72,9 @@ public class ContractAsTask {
     private static String kContractTermConsentSectionType = "http://researchkit.org/docs/Constants/ORKConsentSectionType";
     private static String kContractTermConsentSectionExtension = "http://fhir-registry.smarthealthit.org/StructureDefinition/ORKConsentSection";
 
+    public static final String ID_ELIGIBILITY_AND_CONSENT_TASK = "ID_ELIGIBILITY_AND_CONSENT_TASK";
     public static final String ID_CONSENT_TASK = "ID_CONSENT_TASK";
+    public static final String ID_ELIGIBILITY_TASK = "ID_ELIGIBILITY_TASK";
     public static final String ID_VISUAL = "ID_VISUAL";
     public static final String ID_ELIGIBILITY_INSTRUCTION_STEP = "ID_ELIGIBILITY_INSTRUCTION_STEP";
     public static final String ID_ELIGIBILITY_FORM_STEP = "ID_ELIGIBILITY_FORM_STEP";
@@ -84,12 +86,13 @@ public class ContractAsTask {
     public static final String ID_FORM = "ID_FORM";
     public static final String ID_FORM_NAME = "ID_FORM_NAME";
     public static final String ID_SIGNATURE = "ID_SIGNATURE";
-    public static final String ID_PASSCODE_INSTRUCTION ="ID_PASSCODE_INSTRUCTION";
-    public static final String ID_PASSCODE_STEP ="ID_PASSCODE_STEP";
+    public static final String ID_PASSCODE_INSTRUCTION = "ID_PASSCODE_INSTRUCTION";
+    public static final String ID_PASSCODE_STEP = "ID_PASSCODE_STEP";
 
     /**
      * Returns a {@link ConditionalOrderedTask} that can be presented by a {@link ViewConsentTaskActivity}
-     * */
+     * checking the user's eligibility and getting their consent.
+     */
     public static Task getContractAsTask(Context context, Contract contract, ConsentTaskOptions options) {
         ConsentDocument consentDocument = getConsentDocumentFromContract(context, contract, options);
         List<ConsentSection> sections = consentDocument.getSections();
@@ -118,28 +121,16 @@ public class ContractAsTask {
             initPassCodeSteps(context, steps);
         }
 
-        ConditionalOrderedTask orderedTask = new ConditionalOrderedTask(ID_CONSENT_TASK, steps);
+        ConditionalOrderedTask orderedTask = new ConditionalOrderedTask(ID_ELIGIBILITY_AND_CONSENT_TASK, steps);
         return orderedTask;
     }
 
-    /**
-     * Returns the eligibility steps only including an eligibilityAssessmentStep that adds eligibility
-     * to the StepResult as a boolean
-     * */
-    public List<Step> getEligibilityStepsFromContract (Context context, Contract contract){
-        List<Step> steps = new ArrayList<>();
-
-        // add Eligibility Steps
-        initEligibilitySteps(context, steps, contract);
-        return steps;
-    }
-
-    private static void initEligibilitySteps(Context context, List<Step> steps, Contract contract){
+    private static void initEligibilitySteps(Context context, List<Step> steps, Contract contract) {
         List<Group.GroupCharacteristicComponent> characteristicComponents = ((Group) contract.getSubjectFirstRep().getResource()).getCharacteristic();
 
         // only add eligibility steps if at least one eligibility criteria exists
         if (!characteristicComponents.isEmpty()) {
-            InstructionStep instructionStep = new InstructionStep(ID_ELIGIBILITY_INSTRUCTION_STEP, "Let's see if you may take part in this study", "Tap next to start the eligibility process");
+            InstructionStep instructionStep = new InstructionStep(ID_ELIGIBILITY_INSTRUCTION_STEP, context.getString(R.string.c3_eligibility_instruction_title), context.getString(R.string.c3_eligibility_instruction_text));
             instructionStep.setStepTitle(R.string.rss_eligibility);
             steps.add(instructionStep);
 
@@ -167,46 +158,46 @@ public class ContractAsTask {
             formStep.setFormSteps(questionSteps);
             steps.add(formStep);
 
-            //TODO text for eligibility
-            EligibilityAssessmentStep eligibilityAssessmentStep = new EligibilityAssessmentStep(ID_ELIGIBILITY_ASSESSMENT_STEP, "elititle", "YAY! you're eligible!", "How about NO!", eligibleRequirements);
+            EligibilityAssessmentStep eligibilityAssessmentStep = new EligibilityAssessmentStep(ID_ELIGIBILITY_ASSESSMENT_STEP, context.getString(R.string.c3_eligible_title), context.getString(R.string.c3_eligible_text), context.getString(R.string.c3_not_eligible_title), context.getString(R.string.c3_not_eligible_text), eligibleRequirements);
             steps.add(eligibilityAssessmentStep);
         }
     }
 
     private static ConsentDocument getConsentDocumentFromContract(Context context, Contract contract, ConsentTaskOptions options) {
         // Create consent signature object and set what info is required
-        // TODO with properties etc
         ConsentSignature signature = new ConsentSignature();
         signature.setRequiresName(options.requiresName());
         signature.setRequiresSignatureImage(options.requiresSignature());
         signature.setRequiresBirthDate(options.requiresBirthday());
 
-        //TODO string localization etc.
         ConsentDocument document = new ConsentDocument();
         document.setTitle(context.getString(R.string.rsb_consent));
         document.setSignaturePageTitle(R.string.rsb_consent);
 
-        String review = "no review doc";
-        if (!Strings.isNullOrEmpty(options.getReviewConsentDocument())) {
-            review = ResourcePathManager.getResourceAsString(context, "html/" + options.getReviewConsentDocument() + ".html");
-        }
-        document.setHtmlReviewContent(review);
-
         document.addSignature(signature);
 
-        // Add contract terms as consent sections
+        // Add contract terms as consent sections and create consent review html
+        StringBuilder reviewHTML = new StringBuilder();
+
         if (contract.hasTerm()) {
             List<ConsentSection> consentSections = new ArrayList<ConsentSection>();
             List<Contract.TermComponent> terms = contract.getTerm();
             for (Contract.TermComponent termComponent : terms) {
                 consentSections.add(getContractTermAsConsentSection(context, termComponent));
+                reviewHTML.append(getContractTermAsHTMLString(context, termComponent));
             }
             document.setSections(consentSections);
-            document.setHtmlReviewContent("what if no html found? sections?");
-
         } else {
-            // TODO no terms error
+            Log.e(Logging.logTag, "Contract provides no terms for consent process");
         }
+
+        // set the review document from options when provided, otherwise from contract terms
+        if (!Strings.isNullOrEmpty(options.getReviewConsentDocument())) {
+            document.setHtmlReviewContent(ResourcePathManager.getResourceAsString(context, "html/" + options.getReviewConsentDocument() + ".html"));
+        } else {
+            document.setHtmlReviewContent(reviewHTML.toString());
+        }
+
         return document;
     }
 
@@ -244,8 +235,6 @@ public class ContractAsTask {
 
     private static void innitConsentSharingStep(Context context, List<Step> steps, Contract contract, String shareMoreInfoDocument) {
 
-        //TODO sharing learn more and teamname etc -> where from?
-
         ConsentSharingStep consentSharingStep = new ConsentSharingStep(ID_SHARING);
         consentSharingStep.setStepTitle(R.string.rsb_consent);
         consentSharingStep.setTitle(context.getString(R.string.rsb_consent_share_title));
@@ -269,14 +258,14 @@ public class ContractAsTask {
         ConsentDocumentStep step = new ConsentDocumentStep(ID_CONSENT_STEP);
         //
         step.setStepTitle(R.string.rsb_consent_review_title);
-        step.setText("this title will not appear!!! =(");
-        //step.setTitle(context.getString(R.string.rsb_consent_review_title));
+        step.setTitle(context.getString(R.string.rsb_consent_review_title));
 
+        // Create the title and instruction for the review of the consent document
         StringBuilder docBuilder = new StringBuilder(
                 "</br><div style=\"padding: 10px 10px 10px 10px;\" class='header'>");
         String title = context.getString(R.string.rsb_consent_review_title);
         docBuilder.append(String.format(
-                "<h1 style=\"text-align: center; font-family:sans-serif-light;\">%1$s</h1>",
+                "<h1 style=\"text-align: center;\">%1$s</h1>",
                 title));
         String detail = context.getString(R.string.rsb_consent_review_instruction);
         docBuilder.append(String.format("<p style=\"text-align: center\">%1$s</p>", detail));
@@ -346,22 +335,68 @@ public class ContractAsTask {
                     consentSection.setHtmlContent(extension.getValue().primitiveValue());
                     break;
                 case "htmlContentFile":
-                    //TODO loading html file
                     String htmlContent = ResourcePathManager.getResourceAsString(context, "html/" + extension.getValue().primitiveValue() + ".html");
-
                     consentSection.setHtmlContent(htmlContent);
                     break;
                 case "image":
                     //TODO image
+                    Log.d(Logging.logTag, "can't set customImageName, private field with no setter =(");
                     break;
                 case "animation":
                     //TODO animation
+                    Log.d(Logging.logTag, "can't set customAnimation for ConsentSections =(");
                     break;
                 default:
-                    Log.d(Logging.logTag, "no matching extention");
+                    Log.d(Logging.logTag, "no matching extension for " + extension.getUrl());
             }
         }
         return consentSection;
+    }
+
+    /**
+     * Gets a TermComponent of a FHIR Contract as a HTML string. TermComponents of type overview will
+     * return an empty string.
+     */
+    private static String getContractTermAsHTMLString(Context context, Contract.TermComponent termComponent) {
+        if (getTypeForComponent(termComponent) == ConsentSection.Type.Overview) {
+            return "";
+        } else {
+            List<Extension> sectionExtensions = termComponent.getExtensionsByUrl(kContractTermConsentSectionExtension);
+            List<Extension> extensions = sectionExtensions.get(0).getExtension();
+
+            String text = termComponent.getText();
+            String title = "";
+            String content = "";
+
+            for (Extension extension : extensions) {
+                switch (extension.getUrl()) {
+                    case "title":
+                        title = extension.getValue().primitiveValue();
+                        break;
+                    case "htmlContent":
+                        content = extension.getValue().primitiveValue();
+                        break;
+                    case "htmlContentFile":
+                        content = ResourcePathManager.getResourceAsString(context, "html/" + extension.getValue().primitiveValue() + ".html");
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            StringBuilder stringBuilder = new StringBuilder();
+            if (!Strings.isNullOrEmpty(title)) {
+                stringBuilder.append("<h3>" + title + "</h3>");
+            }
+            if (!Strings.isNullOrEmpty(text)) {
+                stringBuilder.append("<p>" + text);
+            }
+            if (!Strings.isNullOrEmpty(content)) {
+                stringBuilder.append("<p>" + content + "<p>");
+            }
+
+            return stringBuilder.toString();
+        }
     }
 
     private static ConsentSection.Type getTypeForComponent(Contract.TermComponent termComponent) {
@@ -404,8 +439,8 @@ public class ContractAsTask {
      * This method can be used to get a {@link FormStep} with the inclusion criteria to be used with
      * the skin framework of ResearchStack. Be aware that in this case all the criteria have to be
      * answered yes to be eligible, there are no explicit requirement checks!
-     * */
-    public static Step getInclusionCriteriaStepFromContract (Context context, Contract contract){
+     */
+    public static Step getInclusionCriteriaStepFromContract(Context context, Contract contract) {
         FormStep eligibilityFormStep = new FormStep(ID_ELIGIBILITY_FORM_STEP, "", "");
         // Set items on FormStep
         eligibilityFormStep.setStepTitle(R.string.rss_eligibility);
@@ -417,9 +452,9 @@ public class ContractAsTask {
         List<QuestionStep> questionSteps = new ArrayList<>();
 
         int i = 0;
-        for (Group.GroupCharacteristicComponent component : characteristicComponents){
-            String id = "eligibility question "+ Integer.toString(i);
-            QuestionStep questionStep = new QuestionStep(id,component.getCode().getText(), booleanAnswerFormat);
+        for (Group.GroupCharacteristicComponent component : characteristicComponents) {
+            String id = "eligibility question " + Integer.toString(i);
+            QuestionStep questionStep = new QuestionStep(id, component.getCode().getText(), booleanAnswerFormat);
             questionSteps.add(questionStep);
 
             i++;
@@ -428,5 +463,48 @@ public class ContractAsTask {
         eligibilityFormStep.setFormSteps(questionSteps);
 
         return eligibilityFormStep;
+    }
+
+    /**
+     * Returns a ConditionalOrderedTask including the FormStep with the eligibility questions and
+     * an eligibilityAssessmentStep that adds the user's eligibility to the StepResult as a boolean
+     */
+    public Task getEligibilityTaskFromContract(Context context, Contract contract) {
+        List<Step> steps = new ArrayList<>();
+
+        // add Eligibility Steps
+        initEligibilitySteps(context, steps, contract);
+        ConditionalOrderedTask eligibilityTask = new ConditionalOrderedTask(ID_ELIGIBILITY_TASK, steps);
+        return eligibilityTask;
+    }
+
+    /**
+     * Returns a {@link ConditionalOrderedTask} that can be presented by a {@link ViewConsentTaskActivity}
+     * checking the user's eligibility and getting their consent.
+     */
+    public static Task getConsentTaskFromContract(Context context, Contract contract, ConsentTaskOptions options) {
+        ConsentDocument consentDocument = getConsentDocumentFromContract(context, contract, options);
+        List<ConsentSection> sections = consentDocument.getSections();
+
+        List<Step> steps = new ArrayList<>();
+
+        // add Visual Consent Steps
+        innitVisualSteps(context, steps, sections);
+
+        // sharing step
+        if (options.askForSharing()) {
+            innitConsentSharingStep(context, steps, contract, options.getShareMoreInfoDocument());
+        }
+
+        // consent review step
+        initConsentReviewSteps(context, steps, consentDocument);
+
+        // set passcode step
+        if (options.askToCreatePasscode()) {
+            initPassCodeSteps(context, steps);
+        }
+
+        ConditionalOrderedTask orderedTask = new ConditionalOrderedTask(ID_CONSENT_TASK, steps);
+        return orderedTask;
     }
 }

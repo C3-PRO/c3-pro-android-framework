@@ -3,4 +3,13 @@
     <string name="c3_confirm_consent">By agreeing you confirm that you read the consent and that you wish to take part in this research study.</string>
     <string name="c3_passcode_instruction">You will now be asked to create a passcode.\n\nThis protects your data from unauthorized access should you hand your phone to a friend.</string>
 
+    <string name="c3_eligibility_instruction_title">Let\'s see if you may take part in this study</string>
+    <string name="c3_eligibility_instruction_text">Tap next to start the eligibility process</string>
+
+    <string name="c3_eligible_title">You are eligible to join the study</string>
+    <string name="c3_eligible_text">Tap next to begin the consent process</string>
+
+    <string name="c3_not_eligible_title">Thank you for your time</string>
+    <string name="c3_not_eligible_text">Unfortunately, you are not eligible to join the study</string>
+
 </resources>

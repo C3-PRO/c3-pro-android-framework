@@ -32,13 +32,18 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.questionnaire.Resu
  * */
 public class EligibilityAssessmentStep extends ConditionalInstructionStep {
     private boolean eligible = false;
+    private String eligibleTitle;
     private String eligibleText;
+    private String notEligibleTitle;
     private String notEligibleText;
+
     List<ResultRequirement> requirements;
 
-    public EligibilityAssessmentStep(String identifier, String title, String detailTextEligible, String detailTextNotEligible, List<ResultRequirement> requirements) {
-        super(identifier, title, "");
+    public EligibilityAssessmentStep(String identifier, String titleEligible, String detailTextEligible, String titleNotEligible, String detailTextNotEligible, List<ResultRequirement> requirements) {
+        super(identifier, "", "");
+        eligibleTitle = titleEligible;
         eligibleText = detailTextEligible;
+        notEligibleTitle = titleNotEligible;
         notEligibleText = detailTextNotEligible;
         this.requirements = requirements;
         setOptional(false);
@@ -79,5 +84,21 @@ public class EligibilityAssessmentStep extends ConditionalInstructionStep {
 
     public boolean isEligible(){
         return eligible;
+    }
+
+    public String getEligibleTitle() {
+        return eligibleTitle;
+    }
+
+    public String getEligibleText() {
+        return eligibleText;
+    }
+
+    public String getNotEligibleTitle() {
+        return notEligibleTitle;
+    }
+
+    public String getNotEligibleText() {
+        return notEligibleText;
     }
 }

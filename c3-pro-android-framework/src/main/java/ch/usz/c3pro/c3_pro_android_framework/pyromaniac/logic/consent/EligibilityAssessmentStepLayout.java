@@ -101,18 +101,26 @@ public class EligibilityAssessmentStepLayout extends InstructionStepLayout {
             final StepResult<Boolean> eligibilityResult = new StepResult<Boolean>(step);
             eligibilityResult.setResult(new Boolean(((EligibilityAssessmentStep) step).isEligible()));
 
+            String titleString = ((EligibilityAssessmentStep) step).getNotEligibleTitle();
+            String textString = ((EligibilityAssessmentStep) step).getNotEligibleText();
+
+            if(((EligibilityAssessmentStep) step).isEligible()){
+                titleString = ((EligibilityAssessmentStep) step).getEligibleTitle();
+                textString = ((EligibilityAssessmentStep) step).getEligibleText();
+            }
+
             // Set Title
-            if (!TextUtils.isEmpty(step.getTitle())) {
+            if (!TextUtils.isEmpty(titleString)) {
                 TextView title = (TextView) findViewById(R.id.rsb_intruction_title);
                 title.setVisibility(View.VISIBLE);
-                title.setText(step.getTitle());
+                title.setText(titleString);
             }
 
             // Set Summary
-            if (!TextUtils.isEmpty(step.getText())) {
+            if (!TextUtils.isEmpty(textString)) {
                 TextView summary = (TextView) findViewById(R.id.rsb_intruction_text);
                 summary.setVisibility(View.VISIBLE);
-                summary.setText(Html.fromHtml(step.getText()));
+                summary.setText(Html.fromHtml(textString));
                 summary.setMovementMethod(new TextViewLinkHandler() {
                     @Override
                     public void onLinkClick(String url) {
