@@ -7,8 +7,43 @@ The class also sets up a `JobManager` in order to perform background tasks, this
 
 IN
 - FHIR `Questionnaire`
+
 OUT
 - FHIR `QuestionnaireResponse`
+
+##### ViewQuestionnaireTaskActivity
+
+Although the `ViewQuestionnaireTaskActivity` is not a subclass of the ViewTaskActivity, it does work in the same way. It can be set up with a FHIR `Questionnaire` and then be shown to the user through the `startActivityForResult` method:
+
+```java
+    private void launchSurvey(Questionnaire questionnaire) {
+
+        Intent intent = ViewQuestionnaireTaskActivity.newIntent(this, questionnaire);
+
+        startActivityForResult(intent, 222);
+    }
+```
+
+When the activity returns, the `QuestionnaireResponse` can be read from the Extras:
+
+```java
+@Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == AppCompatActivity.RESULT_OK) {
+
+            switch (requestCode) {
+               case 222:
+                    QuestionnaireResponse response = (QuestionnaireResponse) data.getExtras().get(ViewQuestionnaireTaskActivity.EXTRA_QUESTIONNAIRE_RESPONSE);
+                    printQuestionnaireAnswers(response);
+                    break;
+            }
+        } else if (resultCode == AppCompatActivity.RESULT_CANCELED) {
+
+        }
+    }
+```
 
 ##### QuestionnaireAdapter
 
