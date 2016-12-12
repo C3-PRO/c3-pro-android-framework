@@ -12,7 +12,7 @@ The library is hosted at [bintray].
 To set up a project to use the C3PRO framework, the library is available on jCenter and can simply be added as a dependency:
 ```groovy
 dependencies {
-    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.4'){
+    compile ('ch.usz.c3pro:c3-pro-android-framework:1.0'){
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
@@ -27,7 +27,7 @@ A sample application to demonstrate the setup is available [here][c3-pro-demo]
 
 A subclass of `Application` is needed and set as main application in the AndroidManifest.
 Most setup methods are best put in the onCreate() method of the C3PROApplication class to make sure they survive Activities' lifecycles.
-The C3PRO class is initialized with the application's context and a FHIR Server URL.
+The `DataQueue` or `EncryptedDataQueue` is best set up here with the FHIR url.
 There are also some ResearchStack settings. More details about that can be found on the [ResearchStack website][researchstack].
 
 The `Application`file should look something like this:
@@ -37,18 +37,31 @@ public class C3PROApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // TODO: initialize C3-PRO
         /**
-         * Initialize C3PRO:
-         * C3PRO will provide you with a FhirContext. This Object is expensive and you should
-         * only have one instance in your app. Therefore, C3PRO will keep it as a singleton.
-         * Access it by calling C3PRO.getFhirContext();
-         * <p />
-         * If you provide a context (your application) and an URL, C3PRO
-         * will create a DataQueue for you to create and read Resources from your server in a
+         * Initialize DataQueue:
+         * You have to provide a context (your application) and an URL to the FHIR Server.
+         * Once initialized, DataQueue can write and read Resources from your server in a
          * background thread.
          * */
-        C3PRO.init(this, "http://fhirtest.uhn.ca/baseDstu3");
+        DataQueue.init(this, "http://fhirtest.uhn.ca/baseDstu3");
 
+        /**
+         * Or initialize EncryptedDataQueue. It can do everything the DataQueue can do plus it can
+         * send jsonObjects containing encrypted FHIR resources to a special C3-PRO server.
+         * */
+        try {
+            EncryptedDataQueue.init(this, "http://fhirtest.uhn.ca/baseDstu3", "http://encrypted.c3-pro.org", "enc/public.crt", "");
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
+        // TODO: following are some ResearchStack settings. For more info, visit http://researchstack.org
         // ResearchStack: Customize your pin code preferences
         PinCodeConfig pinCodeConfig = new PinCodeConfig(); // default pin config (4-digit, 1 min lockout)
 
@@ -102,13 +115,11 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "ch.usz.c3pro.demo"
+        applicationId "ch.usz.c3pro.demo.android"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        // TODO: enabling multidex support.
-        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -124,8 +135,9 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
+
     // TODO: include C3PRO framework, but exclude some of the hapi library
-    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.1'){
+    compile('ch.usz.c3pro:c3-pro-android-framework:1.0') {
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
@@ -133,14 +145,15 @@ dependencies {
 ```
 ### Versions
 
-The library uses HAPI FHIR 1.5 for dstu3. Questionnaires in dstu2 (with group and question elements) will not work with this demo setup. 
+The library uses HAPI FHIR 1.6 for dstu3. Questionnaires in dstu2 (with group and question elements) will not work with this demo setup. 
 Target Android sdk is 23, minimum sdk 16 due to ResearchStack.
 
 ### Issues
 
 Implementation is ongoing, not everything is complete and nothing has been systematically tested.
 - EnableWhen conditions have only been tested with boolean and singlechoice answertypes
-- No proper error handling implemented as of yet.
+- The encrypted DataQueue is not tested yet and still has some testing artefacts in the framework code
+- Proper error handling not thoroughly implemented as of yet.
 
 Modules
 -------
@@ -154,7 +167,7 @@ Enables the conversion of a FHIR `Questionnaire` resource to a ResearchSTack `ta
 ### DataQueue
 
 This module provides a FHIR server implementation used to move FHIR resources, created on device, to a FHIR 
-server, without the need for user interaction nor -confirmation.
+server, without the need for user interaction nor -confirmation. An EncryptedDataQueue is available to send jsonObjects containing encrypted FHIR resources to a special C3-PRO server. 
 
 ### GoogleFit
 
