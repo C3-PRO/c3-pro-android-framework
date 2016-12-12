@@ -1,6 +1,6 @@
 Consent
 -------------
-The Consent module provides the tool to get the users consent based on a FHIR `Contract`
+The Consent module provides the tool to get the user's consent based on a FHIR `Contract`
 
 ### Module Interface
 
