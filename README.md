@@ -150,7 +150,7 @@ Target Android sdk is 23, minimum sdk 16 due to ResearchStack.
 
 ### Issues
 
-Implementation is ongoing, not everything is complete and nothing has been systematically tested.
+Implementation is ongoing, not everything is complete and nothing has been tested systematically.
 - EnableWhen conditions have only been tested with boolean and singlechoice answertypes
 - The encrypted DataQueue is not tested yet and still has some testing artefacts in the framework code
 - Proper error handling not thoroughly implemented as of yet.
