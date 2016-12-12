@@ -9,6 +9,7 @@ IN
 - `GoogleApiClient`
 - Weight and height readings
 - (data subscriptions and permissions)
+
 OUT
 - FHIR `Quantity` for step count, heigt und weight
 - FHIR `Observation` for weight summary
