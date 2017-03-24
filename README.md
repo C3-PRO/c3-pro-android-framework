@@ -1,6 +1,6 @@
-C3PRO Android Framework
+C3-PRO Android Framework
 -------
-C3PRO uses the [HAPI][hapi] FHIR library and [ResearchStack] in an attempt to bring the [C3-PRO] functionality to Android.
+C3-PRO uses the [HAPI][hapi] FHIR library and [ResearchStack] in an attempt to bring the [C3-PRO] functionality to Android.
 
 Combining [🔥 FHIR][fhir] and [ResearchStack], usually for data storage into [i2b2][], this framework allows you to use 
 FHIR `Questionnaire` resources directly with a ResearchStack `ViewTaskActivity` and will return FHIR `QuestionnaireResponse` that 
@@ -12,7 +12,7 @@ The library is hosted at [bintray].
 To set up a project to use the C3PRO framework, the library is available on jCenter and can simply be added as a dependency:
 ```groovy
 dependencies {
-    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.4'){
+    compile ('ch.usz.c3pro:c3-pro-android-framework:1.0'){
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
@@ -27,7 +27,7 @@ A sample application to demonstrate the setup is available [here][c3-pro-demo]
 
 A subclass of `Application` is needed and set as main application in the AndroidManifest.
 Most setup methods are best put in the onCreate() method of the C3PROApplication class to make sure they survive Activities' lifecycles.
-The C3PRO class is initialized with the application's context and a FHIR Server URL.
+The `DataQueue` or `EncryptedDataQueue` is best set up here with the FHIR url.
 There are also some ResearchStack settings. More details about that can be found on the [ResearchStack website][researchstack].
 
 The `Application`file should look something like this:
@@ -37,18 +37,31 @@ public class C3PROApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // TODO: initialize C3-PRO
         /**
-         * Initialize C3PRO:
-         * C3PRO will provide you with a FhirContext. This Object is expensive and you should
-         * only have one instance in your app. Therefore, C3PRO will keep it as a singleton.
-         * Access it by calling C3PRO.getFhirContext();
-         * <p />
-         * If you provide a context (your application) and an URL, C3PRO
-         * will create a DataQueue for you to create and read Resources from your server in a
+         * Initialize DataQueue:
+         * You have to provide a context (your application) and an URL to the FHIR Server.
+         * Once initialized, DataQueue can write and read Resources from your server in a
          * background thread.
          * */
-        C3PRO.init(this, "http://fhirtest.uhn.ca/baseDstu3");
+        DataQueue.init(this, "http://fhirtest.uhn.ca/baseDstu3");
 
+        /**
+         * Or initialize EncryptedDataQueue. It can do everything the DataQueue can do plus it can
+         * send jsonObjects containing encrypted FHIR resources to a special C3-PRO server.
+         * */
+        try {
+            EncryptedDataQueue.init(this, "http://fhirtest.uhn.ca/baseDstu3", "http://encrypted.c3-pro.org", "enc/public.crt", "");
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
+        // TODO: following are some ResearchStack settings. For more info, visit http://researchstack.org
         // ResearchStack: Customize your pin code preferences
         PinCodeConfig pinCodeConfig = new PinCodeConfig(); // default pin config (4-digit, 1 min lockout)
 
@@ -102,13 +115,11 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "ch.usz.c3pro.demo"
+        applicationId "ch.usz.c3pro.demo.android"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        // TODO: enabling multidex support.
-        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -124,101 +135,25 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
+
     // TODO: include C3PRO framework, but exclude some of the hapi library
-    compile ('ch.usz.c3pro:c3-pro-android-framework:0.1.1'){
+    compile('ch.usz.c3pro:c3-pro-android-framework:1.0') {
         exclude module: 'javax.servlet-api'
         exclude module: 'hapi-fhir-base'
     }
 }
 ```
-##### The C3PRO
-Once set up (preferably in your Application class, so it survives the Activities' lifesycles), the C3PRO will provide you with a HAPI `FhirContext` and a `DataQueue` if you have provided a FHIR Server URL.
-
-You can access it anywhere in your app code, for example to get a `JsonParser`:
-```java
-C3PRO.getFhirContext().newJsonParser();
-```
-
-Or to upload a resource:
-```java
-C3PRO.getDataQueue.create(resource);
-```
-##### The QuestionnaireFragment
-Use the `QuestionnaireFragment` to represent a Questionnaire and conduct a Survey based on it.
-```java
-private void launchSurvey(Questionnaire questionnaire) {
-        /**
-         * Looking up if a fragment for the given questionnaire has been created earlier. if so,
-         * the survey is started, assuming that the TaskViewActivity has been created before!!
-         * The questionnaire IDs are used for identification, assuming they are unique.
-         * */
-        QuestionnaireFragment fragment = (QuestionnaireFragment) getSupportFragmentManager().findFragmentByTag(questionnaire.getId());
-        if (fragment != null) {
-            /**
-             * If the fragment has been added before, the TaskViewActivity can be started directly,
-             * assuming that it was prepared right after the fragment was created.
-             * */
-            fragment.startTaskViewActivity();
-        } else {
-            /**
-             * If the fragment does not exist, create it, add it to the fragment manager and
-             * let it prepare the TaskViewActivity
-             * */
-            final QuestionnaireFragment questionnaireFragment = new QuestionnaireFragment();
-            questionnaireFragment.newInstance(questionnaire, new QuestionnaireFragment.QuestionnaireFragmentListener() {
-                @Override
-                public void whenTaskReady(String requestID) {
-                    /**
-                     * Only when the task is ready, the survey is started
-                     * */
-                    questionnaireFragment.startTaskViewActivity();
-                }
-
-                @Override
-                public void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse) {
-                    /**
-                     * Where the response for a completed survey is received. Here it is printed
-                     * to a TextView defined in the app layout.
-                     * */
-                    printQuestionnaireAnswers(questionnaireResponse);
-                }
-
-                @Override
-                public void whenCancelledOrFailed() {
-                    /**
-                     * If the task can not be prepared, a backup plan is needed.
-                     * Here the fragment is removed from the FragmentManager so it can be created
-                     * again later
-                     * TODO: proper error handling not yet implemented
-                     * */
-                    getSupportFragmentManager().beginTransaction().remove(questionnaireFragment).commit();
-                }
-            });
-
-            /**
-             * In order for the fragment to get the context and be found later on, it has to be added
-             * to the fragment manager.
-             * */
-            getSupportFragmentManager().beginTransaction().add(questionnaireFragment, questionnaire.getId()).commit();
-            /**
-             * prepare the TaskViewActivity. As defined above, it will start the survey once the
-             * TaskViewActivity is ready.
-             * */
-            questionnaireFragment.prepareTaskViewActivity();
-        }
-    }
-```
-
 ### Versions
 
-The library uses HAPI FHIR 1.5 for dstu3. Questionnaires in dstu2 (with group and question elements) will not work with this demo setup. 
+The library uses HAPI FHIR 1.6 for dstu3. Questionnaires in dstu2 (with group and question elements) will not work with this demo setup. 
 Target Android sdk is 23, minimum sdk 16 due to ResearchStack.
 
 ### Issues
 
-Implementation is ongoing, not everything is complete and nothing has been systematically tested.
+Implementation is ongoing, not everything is complete and nothing has been tested systematically.
 - EnableWhen conditions have only been tested with boolean and singlechoice answertypes
-- No proper error handling implemented as of yet.
+- The encrypted DataQueue is not tested yet and still has some testing artefacts in the framework code
+- Proper error handling not thoroughly implemented as of yet.
 
 Modules
 -------
@@ -232,7 +167,7 @@ Enables the conversion of a FHIR `Questionnaire` resource to a ResearchSTack `ta
 ### DataQueue
 
 This module provides a FHIR server implementation used to move FHIR resources, created on device, to a FHIR 
-server, without the need for user interaction nor -confirmation.
+server, without the need for user interaction nor -confirmation. An EncryptedDataQueue is available to send jsonObjects containing encrypted FHIR resources to a special C3-PRO server. 
 
 ### GoogleFit
 

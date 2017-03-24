@@ -7,73 +7,40 @@ The class also sets up a `JobManager` in order to perform background tasks, this
 
 IN
 - FHIR `Questionnaire`
+
 OUT
 - FHIR `QuestionnaireResponse`
 
+##### ViewQuestionnaireTaskActivity
 
-##### QuestionnaireFragment
+Although the `ViewQuestionnaireTaskActivity` is not a subclass of the ViewTaskActivity, it does work in the same way. It can be set up with a FHIR `Questionnaire` and then be shown to the user through the `startActivityForResult` method:
 
-The `QuestionnaireFragment` can be used to represent a Questionnaire and conduct a Survey based on it.
 ```java
-private void launchSurvey(Questionnaire questionnaire) {
-        /**
-         * Looking up if a fragment for the given questionnaire has been created earlier. if so,
-         * the survey is started, assuming that the TaskViewActivity has been created before!!
-         * The questionnaire IDs are used for identification, assuming they are unique.
-         * */
-        QuestionnaireFragment fragment = (QuestionnaireFragment) getSupportFragmentManager().findFragmentByTag(questionnaire.getId());
-        if (fragment != null) {
-            /**
-             * If the fragment has been added before, the TaskViewActivity can be started directly,
-             * assuming that it was prepared right after the fragment was created.
-             * */
-            fragment.startTaskViewActivity();
-        } else {
-            /**
-             * If the fragment does not exist, create it, add it to the fragment manager and
-             * let it prepare the TaskViewActivity
-             * */
-            final QuestionnaireFragment questionnaireFragment = new QuestionnaireFragment();
-            questionnaireFragment.newInstance(questionnaire, new QuestionnaireFragment.QuestionnaireFragmentListener() {
-                @Override
-                public void whenTaskReady(String requestID) {
-                    /**
-                     * Only when the task is ready, the survey is started
-                     * */
-                    questionnaireFragment.startTaskViewActivity();
-                }
+    private void launchSurvey(Questionnaire questionnaire) {
 
-                @Override
-                public void whenCompleted(String requestID, QuestionnaireResponse questionnaireResponse) {
-                    /**
-                     * Where the response for a completed survey is received. In the sample app it is printed
-                     * to a TextView defined in the app layout.
-                     * */
-                    printQuestionnaireAnswers(questionnaireResponse);
-                }
+        Intent intent = ViewQuestionnaireTaskActivity.newIntent(this, questionnaire);
 
-                @Override
-                public void whenCancelledOrFailed() {
-                    /**
-                     * If the task can not be prepared, a backup plan is needed.
-                     * Here the fragment is removed from the FragmentManager so it can be created
-                     * again later
-                     * TODO: proper error handling not yet implemented
-                     * */
-                    getSupportFragmentManager().beginTransaction().remove(questionnaireFragment).commit();
-                }
-            });
+        startActivityForResult(intent, 222);
+    }
+```
 
-            /**
-             * In order for the fragment to get the context and be found later on, it has to be added
-             * to the fragment manager.
-             * */
-            getSupportFragmentManager().beginTransaction().add(questionnaireFragment, questionnaire.getId()).commit();
-            /**
-             * prepare the TaskViewActivity. As defined above, it will start the survey once the
-             * TaskViewActivity is ready.
-             * */
-            questionnaireFragment.prepareTaskViewActivity();
+When the activity returns, the `QuestionnaireResponse` can be read from the Extras:
+
+```java
+@Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == AppCompatActivity.RESULT_OK) {
+
+            switch (requestCode) {
+               case 222:
+                    QuestionnaireResponse response = (QuestionnaireResponse) data.getExtras().get(ViewQuestionnaireTaskActivity.EXTRA_QUESTIONNAIRE_RESPONSE);
+                    printQuestionnaireAnswers(response);
+                    break;
+            }
+        } else if (resultCode == AppCompatActivity.RESULT_CANCELED) {
+
         }
     }
 ```
