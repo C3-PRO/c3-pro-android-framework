@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.google.common.base.Strings;
 
-import org.apache.commons.codec.binary.StringUtils;
 import org.researchstack.backbone.ResourcePathManager;
 
 import java.io.InputStream;
