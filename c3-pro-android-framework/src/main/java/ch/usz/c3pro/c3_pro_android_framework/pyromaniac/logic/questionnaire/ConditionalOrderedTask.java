@@ -13,16 +13,16 @@ import java.util.List;
 
 /**
  * C3-PRO
- * <p/>
+ *
  * Created by manny Weber on 05/18/16.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,10 +129,7 @@ public class ConditionalOrderedTask extends OrderedTask implements Serializable 
     private boolean isStepActive(Step step, TaskResult result) {
         if (!(step instanceof ConditionalStep)) {
             return true;
-        } else if (step instanceof ConditionalStep && ((ConditionalStep) step).requirementsAreSatisfiedBy(result)) {
-            return true;
-        } else {
-            return false;
-        }
+        } else
+            return step instanceof ConditionalStep && ((ConditionalStep) step).requirementsAreSatisfiedBy(result);
     }
 }

@@ -24,16 +24,16 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.WriteToGoogleFitAs
 
 /**
  * C3-PRO
- * <p/>
+ *
  * Created by manny Weber on 06/29/2016.
  * Copyright © 2016 University Hospital Zurich. All rights reserved.
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.WriteToGoogleFitAs
 public class GoogleFitAgent {
     private static GoogleApiClient apiClient;
 
-    private void GoogleFitAgent() {
+    private GoogleFitAgent() {
     }
 
     public static void init(GoogleApiClient googleApiClient) {
@@ -133,7 +133,7 @@ public class GoogleFitAgent {
 
         DataSet dataSet = DataSet.create(dataSource);
         DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(now, now, TimeUnit.MILLISECONDS);
-        dataPoint = dataPoint.setFloatValues(new Float(weight));
+        dataPoint = dataPoint.setFloatValues(Float.valueOf(weight));
         dataSet.add(dataPoint);
 
         new WriteToGoogleFitAsyncTask(apiClient, dataSet).execute();
@@ -156,7 +156,7 @@ public class GoogleFitAgent {
 
         DataSet dataSet = DataSet.create(dataSource);
         DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(now, now, TimeUnit.MILLISECONDS);
-        dataPoint = dataPoint.setFloatValues(new Float(height));
+        dataPoint = dataPoint.setFloatValues(Float.valueOf(height));
         dataSet.add(dataPoint);
 
         new WriteToGoogleFitAsyncTask(apiClient, dataSet).execute();
