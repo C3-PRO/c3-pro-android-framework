@@ -64,7 +64,7 @@ dependencies {
 
 // bintray upload
 // allprojects {
-//    tasks.withType(Javadoc).all { enabled = false }
+//  tasks.withType(Javadoc).all { enabled = false }
 //}
 // apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
 // apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
