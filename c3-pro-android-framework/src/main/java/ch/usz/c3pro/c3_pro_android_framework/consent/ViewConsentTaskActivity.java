@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
-import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Contract;
 import org.researchstack.backbone.result.StepResult;
 import org.researchstack.backbone.result.TaskResult;
@@ -31,9 +30,7 @@ import ch.usz.c3pro.c3_pro_android_framework.R;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.CreateIntentFromContractAsyncTask;
-import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.ConsentSummary;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.ConsentTaskOptions;
-import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.ContractAsTask;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.EligibilityAssessmentStep;
 
 /**
@@ -64,18 +61,17 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
     public static final String EXTRA_TASK = "ViewConsentTaskActivity.ExtraTask";
     public static final String EXTRA_TASK_RESULT = "ViewConsentTaskActivity.ExtraTaskResult";
     public static final String EXTRA_STEP = "ViewConsentTaskActivity.ExtraStep";
-    public static final String EXTRA_CONSENT_SUMMARY = "ViewConsentTaskActivity.ExtraConsentSummary";
 
     private StepSwitcher root;
 
     private Step currentStep;
     private Task task;
     private TaskResult taskResult;
+    private ConsentTaskOptions consentTaskOptions;
 
     /**
      * Get an {@link android.content.Intent} based on a FHIR {@link org.hl7.fhir.dstu3.model.Contract}
-     * with standard {@link ConsentTaskOptions} which can be started for a Result. The result will be
-     * the {@link ConsentSummary} and can be read from the Extras with the ID EXTRA_CONSENT_SUMMARY.
+     * with standard {@link ConsentTaskOptions} which can be started for a Result.
      * */
     public static Intent newIntent(Context context, Contract contract) {
         return newIntent(context, contract, new ConsentTaskOptions());
@@ -83,8 +79,7 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
 
     /**
      * Get an {@link android.content.Intent} based on a FHIR {@link org.hl7.fhir.dstu3.model.Contract}
-     * with provided {@link ConsentTaskOptions} which can be started for a Result. The result will be
-     * the {@link ConsentSummary} and can be read from the Extras with the ID EXTRA_CONSENT_SUMMARY.
+     * with provided {@link ConsentTaskOptions} which can be started for a Result.
      * */
     public static Intent newIntent(Context context, Contract contract, ConsentTaskOptions options) {
         Task task = Pyro.getContractAsTask(context, contract, options);
@@ -93,8 +88,8 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
 
     /**
      * Get an {@link android.content.Intent} based on a FHIR {@link org.hl7.fhir.dstu3.model.Contract}
-     * with provided {@link ConsentTaskOptions} which can be started for a Result. The result will be
-     * the {@link ConsentSummary} and can be read from the Extras with the ID EXTRA_CONSENT_SUMMARY.
+     * with provided {@link ConsentTaskOptions} which can be started for a Result. The result can be
+     * read from the Extras.
      * The Intent will be created in a background task and will be returned to the IntentReceiver
      * when ready.
      * */
@@ -202,12 +197,6 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
         resultIntent.putExtra(EXTRA_TASK_RESULT, taskResult);
 
         //TODO: consent pdf???
-        boolean consented = (boolean) taskResult.getStepResult(ContractAsTask.ID_CONSENT_STEP).getResult();
-        int pinCode = Integer.parseInt((String) taskResult.getStepResult(ContractAsTask.ID_PASSCODE_STEP).getResult());
-        BooleanType sharing = (BooleanType) taskResult.getStepResult(ContractAsTask.ID_SHARING).getResult();
-
-        ConsentSummary summary = new ConsentSummary(consented, 111, sharing.booleanValue());
-        resultIntent.putExtra(EXTRA_CONSENT_SUMMARY, summary);
 
         setResult(RESULT_OK, resultIntent);
         finish();
