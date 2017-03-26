@@ -87,7 +87,7 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
      * the {@link ConsentSummary} and can be read from the Extras with the ID EXTRA_CONSENT_SUMMARY.
      * */
     public static Intent newIntent(Context context, Contract contract, ConsentTaskOptions options) {
-        Task task = Pyro.getContractAsTask(context, contract, new ConsentTaskOptions());
+        Task task = Pyro.getContractAsTask(context, contract, options);
         return newIntent(context, task);
     }
 

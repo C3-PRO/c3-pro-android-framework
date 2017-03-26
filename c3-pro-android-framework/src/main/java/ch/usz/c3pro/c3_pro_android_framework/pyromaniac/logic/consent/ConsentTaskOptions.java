@@ -26,10 +26,10 @@ package ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent;
 public class ConsentTaskOptions {
 
     private boolean askForSharing = true;
-    private String shareMoreInfoDocument = "consent_sharing";
+    private String shareMoreInfoDocument = "";
     private String reviewConsentDocument;
 
-    private boolean askToCreatePasscode = true;
+    private boolean askToCreatePasscode = false;
 
     private boolean requiresSignature = true;
 
