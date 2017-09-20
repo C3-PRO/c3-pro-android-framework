@@ -16,6 +16,7 @@ import org.researchstack.backbone.ResourcePathManager;
 import org.researchstack.backbone.answerformat.AnswerFormat;
 import org.researchstack.backbone.answerformat.BooleanAnswerFormat;
 import org.researchstack.backbone.answerformat.ChoiceAnswerFormat;
+import org.researchstack.backbone.answerformat.DateAnswerFormat;
 import org.researchstack.backbone.answerformat.TextAnswerFormat;
 import org.researchstack.backbone.model.Choice;
 import org.researchstack.backbone.model.ConsentDocument;
@@ -85,6 +86,7 @@ public class ContractAsTask {
     public static final String ID_CONSENT_DOC = "consent_review_doc";
     public static final String ID_FORM = "ID_FORM";
     public static final String ID_FORM_NAME = "ID_FORM_NAME";
+    public static final String ID_FORM_DOB = "ID_FORM_DOB";
     public static final String ID_SIGNATURE = "ID_SIGNATURE";
     public static final String ID_PASSCODE_INSTRUCTION = "ID_PASSCODE_INSTRUCTION";
     public static final String ID_PASSCODE_STEP = "ID_PASSCODE_STEP";
@@ -126,40 +128,43 @@ public class ContractAsTask {
     }
 
     private static void initEligibilitySteps(Context context, List<Step> steps, Contract contract) {
-        List<Group.GroupCharacteristicComponent> characteristicComponents = ((Group) contract.getSubjectFirstRep().getResource()).getCharacteristic();
 
-        // only add eligibility steps if at least one eligibility criteria exists
-        if (!characteristicComponents.isEmpty()) {
-            InstructionStep instructionStep = new InstructionStep(ID_ELIGIBILITY_INSTRUCTION_STEP, context.getString(R.string.c3_eligibility_instruction_title), context.getString(R.string.c3_eligibility_instruction_text));
-            instructionStep.setStepTitle(R.string.rss_eligibility);
-            steps.add(instructionStep);
+        if ((Group) contract.getSubjectFirstRep().getResource() != null) {
+            List<Group.GroupCharacteristicComponent> characteristicComponents = ((Group) contract.getSubjectFirstRep().getResource()).getCharacteristic();
+
+            // only add eligibility steps if at least one eligibility criteria exists
+            if (!characteristicComponents.isEmpty()) {
+                InstructionStep instructionStep = new InstructionStep(ID_ELIGIBILITY_INSTRUCTION_STEP, context.getString(R.string.c3_eligibility_instruction_title), context.getString(R.string.c3_eligibility_instruction_text));
+                instructionStep.setStepTitle(R.string.rss_eligibility);
+                steps.add(instructionStep);
 
 
-            FormStep formStep = new FormStep(ID_ELIGIBILITY_FORM_STEP, "", "");
-            formStep.setStepTitle(R.string.rss_eligibility);
-            formStep.setOptional(false);
+                FormStep formStep = new FormStep(ID_ELIGIBILITY_FORM_STEP, "", "");
+                formStep.setStepTitle(R.string.rss_eligibility);
+                formStep.setOptional(false);
 
-            BooleanAnswerFormat booleanAnswerFormat = new BooleanAnswerFormat("Yes", "No");
+                BooleanAnswerFormat booleanAnswerFormat = new BooleanAnswerFormat("Yes", "No");
 
-            List<ResultRequirement> eligibleRequirements = new ArrayList<>();
-            List<QuestionStep> questionSteps = new ArrayList<>();
+                List<ResultRequirement> eligibleRequirements = new ArrayList<>();
+                List<QuestionStep> questionSteps = new ArrayList<>();
 
-            int i = 0;
-            for (Group.GroupCharacteristicComponent component : characteristicComponents) {
-                String id = "eligibility " + Integer.toString(i);
-                QuestionStep questionStep = new QuestionStep(id, component.getCode().getText(), booleanAnswerFormat);
-                questionSteps.add(questionStep);
+                int i = 0;
+                for (Group.GroupCharacteristicComponent component : characteristicComponents) {
+                    String id = "eligibility " + Integer.toString(i);
+                    QuestionStep questionStep = new QuestionStep(id, component.getCode().getText(), booleanAnswerFormat);
+                    questionSteps.add(questionStep);
 
-                EligibilityRequirement requirement = new EligibilityRequirement(id, component.getValue());
-                eligibleRequirements.add(requirement);
-                i++;
+                    EligibilityRequirement requirement = new EligibilityRequirement(id, component.getValue());
+                    eligibleRequirements.add(requirement);
+                    i++;
+                }
+
+                formStep.setFormSteps(questionSteps);
+                steps.add(formStep);
+
+                EligibilityAssessmentStep eligibilityAssessmentStep = new EligibilityAssessmentStep(ID_ELIGIBILITY_ASSESSMENT_STEP, context.getString(R.string.c3_eligible_title), context.getString(R.string.c3_eligible_text), context.getString(R.string.c3_not_eligible_title), context.getString(R.string.c3_not_eligible_text), eligibleRequirements);
+                steps.add(eligibilityAssessmentStep);
             }
-
-            formStep.setFormSteps(questionSteps);
-            steps.add(formStep);
-
-            EligibilityAssessmentStep eligibilityAssessmentStep = new EligibilityAssessmentStep(ID_ELIGIBILITY_ASSESSMENT_STEP, context.getString(R.string.c3_eligible_title), context.getString(R.string.c3_eligible_text), context.getString(R.string.c3_not_eligible_title), context.getString(R.string.c3_not_eligible_text), eligibleRequirements);
-            steps.add(eligibilityAssessmentStep);
         }
     }
 
@@ -290,6 +295,12 @@ public class ContractAsTask {
                 String placeholder = context.getString(R.string.rsb_consent_name_placeholder);
                 String nameText = context.getString(R.string.rsb_consent_name_full);
                 formSteps.add(new QuestionStep(ID_FORM_NAME, nameText, format));
+            }
+
+            if (requiresBirthDate) {
+                DateAnswerFormat dateFormat = new DateAnswerFormat(AnswerFormat.DateAnswerStyle.Date);
+                String dateText = "Day of Birth";
+                formSteps.add(new QuestionStep(ID_FORM_DOB, dateText, dateFormat));
             }
 
             String formTitle = context.getString(R.string.rsb_consent_form_title);

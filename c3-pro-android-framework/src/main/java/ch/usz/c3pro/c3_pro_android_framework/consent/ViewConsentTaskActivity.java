@@ -4,11 +4,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -16,12 +20,14 @@ import android.widget.Toast;
 import org.hl7.fhir.dstu3.model.Contract;
 import org.researchstack.backbone.result.StepResult;
 import org.researchstack.backbone.result.TaskResult;
+import org.researchstack.backbone.step.ConsentDocumentStep;
 import org.researchstack.backbone.step.Step;
 import org.researchstack.backbone.task.Task;
 import org.researchstack.backbone.ui.PinCodeActivity;
 import org.researchstack.backbone.ui.callbacks.StepCallbacks;
 import org.researchstack.backbone.ui.step.layout.StepLayout;
 import org.researchstack.backbone.ui.views.StepSwitcher;
+import org.researchstack.skin.task.ConsentTask;
 
 import java.lang.reflect.Constructor;
 import java.util.Date;
@@ -31,6 +37,8 @@ import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.Pyro;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.Callback;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.async.CreateIntentFromContractAsyncTask;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.ConsentTaskOptions;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.ContractAsTask;
+import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.CreateConsentPDF;
 import ch.usz.c3pro.c3_pro_android_framework.pyromaniac.logic.consent.EligibilityAssessmentStep;
 
 /**
@@ -67,7 +75,6 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
     private Step currentStep;
     private Task task;
     private TaskResult taskResult;
-    private ConsentTaskOptions consentTaskOptions;
 
     /**
      * Get an {@link android.content.Intent} based on a FHIR {@link org.hl7.fhir.dstu3.model.Contract}
@@ -192,11 +199,29 @@ public class ViewConsentTaskActivity extends PinCodeActivity implements StepCall
     }
 
     private void saveAndFinish() {
-        taskResult.setEndDate(new Date());
         Intent resultIntent = new Intent();
-        resultIntent.putExtra(EXTRA_TASK_RESULT, taskResult);
 
-        //TODO: consent pdf???
+        /*ConsentDocumentStep consentDocumentStep = (ConsentDocumentStep) task.getStepWithIdentifier(ContractAsTask.ID_CONSENT_STEP);
+        if (consentDocumentStep != null) {
+            // get consent doc content
+            String consentDoc = consentDocumentStep.getConsentHTML();
+
+            // get signature as bitmap
+            String signatureEncodeBase64 = (String) taskResult.getStepResult(ConsentTask.ID_SIGNATURE).getResultForIdentifier("ConsentSignatureStep.Signature");
+            byte[] decodedString = Base64.decode(signatureEncodeBase64, Base64.DEFAULT);
+            Bitmap signatureBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+            // create pdf
+            CreateConsentPDF.createPDFfromHTML(getApplicationContext(), consentDoc, signatureBitmap, Environment.getExternalStorageDirectory() + "/consent.pdf");
+
+
+            // add as extra
+            //resultIntent.putExtra(EXTRA_CONSENT_PDF_PATH, pathToPDF);
+        }*/
+
+
+        taskResult.setEndDate(new Date());
+        resultIntent.putExtra(EXTRA_TASK_RESULT, taskResult);
 
         setResult(RESULT_OK, resultIntent);
         finish();
