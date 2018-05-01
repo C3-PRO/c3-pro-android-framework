@@ -60,7 +60,11 @@ public class CreateConsentPDF {
             content.setTextSize(new Float(5));
             String[] stringParts = consentHTML.split("signature_here");
 
-            content.setText(Html.fromHtml(stringParts[0], Html.FROM_HTML_MODE_COMPACT));
+            if (Integer.valueOf(Build.VERSION.SDK_INT) >= 24) {
+                content.setText(Html.fromHtml(stringParts[0], Html.FROM_HTML_MODE_COMPACT));
+            } else{
+                content.setText("pdf creation from html requires api level 24 or above");
+            }
             layout.addView(content);
 
 
@@ -84,7 +88,11 @@ public class CreateConsentPDF {
                 content2.setVisibility(View.VISIBLE);
                 content2.setWidth(page.getCanvas().getWidth()-40);
                 content2.setTextSize(new Float(5));
-                content2.setText(Html.fromHtml(stringParts[1], Html.FROM_HTML_MODE_COMPACT));
+                if (Integer.valueOf(Build.VERSION.SDK_INT) >= 24) {
+                    content2.setText(Html.fromHtml(stringParts[1], Html.FROM_HTML_MODE_COMPACT));
+                } else{
+                    content2.setText("pdf creation from html requires api level 24 or above");
+                }
                 layout.addView(content2);
             }
 

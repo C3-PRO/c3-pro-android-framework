@@ -299,7 +299,7 @@ public class ContractAsTask {
 
             if (requiresBirthDate) {
                 DateAnswerFormat dateFormat = new DateAnswerFormat(AnswerFormat.DateAnswerStyle.Date);
-                String dateText = "Day of Birth";
+                String dateText = context.getString(R.string.rsb_consent_dob_full);
                 formSteps.add(new QuestionStep(ID_FORM_DOB, dateText, dateFormat));
             }
 
