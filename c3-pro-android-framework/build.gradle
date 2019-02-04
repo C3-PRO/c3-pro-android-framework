@@ -26,7 +26,7 @@ ext {
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         minSdkVersion 16
@@ -50,15 +50,15 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.3.0'
-    compile 'org.researchstack:backbone:1.1.1'
-    compile 'org.researchstack:skin:1.1.1'
-    compile 'com.birbit:android-priority-jobqueue:2.0.1'
-    compile 'com.google.android.gms:play-services-fitness:10.2.1'
-    compile "ca.uhn.hapi.fhir:hapi-fhir-android:2.2:dstu3@jar"
-    compile "commons-io:commons-io:+"
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:25.3.0'
+    implementation 'org.researchstack:backbone:1.1.1'
+    implementation 'org.researchstack:skin:1.1.1'
+    implementation 'com.birbit:android-priority-jobqueue:2.0.1'
+    implementation 'com.google.android.gms:play-services-fitness:10.2.1'
+    implementation "ca.uhn.hapi.fhir:hapi-fhir-android:2.2:dstu3@jar"
+    implementation "commons-io:commons-io:+"
 }
 
 
